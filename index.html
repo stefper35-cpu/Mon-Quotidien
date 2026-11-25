@@ -70,6 +70,13 @@ nav button[aria-current="page"],.dy[aria-current="true"]{background:linear-gradi
 .dy.today:not([aria-current="true"]){border-color:var(--fun)}
 .code{font-family:monospace;font-size:1.2rem;font-weight:700;background:var(--bg);border:2px dashed var(--line);border-radius:12px;padding:12px;margin:10px 0 14px;word-break:break-all;user-select:all}
 .fam{margin-top:28px}
+.meteo{margin:12px 2px 4px;padding:14px 16px;background:var(--surface);border:2px solid var(--line);border-radius:18px;box-shadow:0 4px 0 var(--line)}
+.mt{font-size:1.7rem;font-weight:700}
+.mw{font-size:1rem;font-weight:400;color:var(--muted)}
+.mad{font-weight:700;color:var(--accent);margin-top:4px}
+.mrow{display:flex;gap:8px;margin:10px 0}
+.mrow input{margin-top:0;flex:1;min-width:0}
+.quote{margin:16px 2px 4px;padding:14px 16px;background:var(--surface);border:2px dashed var(--fun);border-radius:18px;font-style:italic;font-weight:700}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:2px solid var(--line)}
 nav button{flex:1;background:var(--bg);color:var(--ink);border-color:var(--line);font-weight:700}
 nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -87,6 +94,8 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
   <div class="date" id="date"></div>
   <div class="clock" id="clock"></div>
 </header>
+<div class="quote" id="quote"></div>
+<div class="meteo" id="meteo"></div>
 <main id="view"></main>
 <nav>
   <button data-t="meds" onclick="go('meds')"><span>💊</span>Pilules</button>
@@ -104,7 +113,7 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 </div>
 <script>
 const KEY="mon-quotidien-v1";
-let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{}};
+let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{},meteo:{}};
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=id=>document.getElementById(id);
@@ -214,7 +223,57 @@ function gcal(r){
   const e=dayKey(en).replace(/-/g,"")+"T"+pad(en.getHours())+pad(en.getMinutes())+"00";
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Mon Quotidien");
 }
+let meteoBusy=false;
+const WX=c=>c===0?["☀️","Ensoleillé"]:c<=2?["🌤️","Plutôt dégagé"]:c===3?["☁️","Nuageux"]:c<=48?["🌫️","Brouillard"]:c<=57?["🌦️","Bruine"]:c<=67?["🌧️","Pluie"]:c<=77?["🌨️","Neige"]:c<=82?["🌦️","Averses"]:c<=86?["🌨️","Averses de neige"]:["⛈️","Orage"];
+function advice(d){
+  if(d.rain>=50||d.code>=95)return "Prenez un parapluie ☔";
+  if(d.max>=28)return "Il fera chaud : pensez à boire de l’eau 💧";
+  if(d.max<=6)return "Il fera froid : couvrez-vous bien 🧣";
+  if(d.code<=2)return "Belle journée pour une petite promenade 🚶";
+  return "Une journée tranquille, profitez-en.";
+}
+const mmsg=t=>{const e=$("mmsg");if(e)e.textContent=t;};
+function showMeteo(){
+  const el=$("meteo"),m=S.meteo||{};
+  if(!m.loc){el.innerHTML='<div class="mt">☀️ Météo du jour</div><button class="big wide" onclick="meteoGeo()">📍 Utiliser ma position</button><div class="mrow"><input id="mcity" type="text" placeholder="Ou tapez votre ville" autocomplete="off"><button class="big" onclick="meteoCity()">OK</button></div><div class="sub" id="mmsg"></div>';return;}
+  const d=m.data;
+  if(!d){el.innerHTML='<div class="mt">☀️ Météo du jour</div><div class="sub">'+(m.err?"Météo indisponible pour le moment.":"Chargement…")+'</div><button class="link" onclick="meteoReset()">Changer de lieu</button>';return;}
+  const w=WX(d.code);
+  el.innerHTML=`<div class="mt">${w[0]} ${Math.round(d.now)}° <span class="mw">${w[1]}, ${esc(m.loc.name)}</span></div><div>Aujourd’hui : ${Math.round(d.min)}° à ${Math.round(d.max)}°, pluie ${d.rain} %</div><div class="mad">${advice(d)}</div><button class="link" onclick="meteoReset()">Changer de lieu</button>`;
+}
+function setLoc(lat,lon,name){S.meteo={loc:{lat,lon,name},data:null,at:0};save();showMeteo();loadMeteo(true);}
+function meteoGeo(){
+  if(!navigator.geolocation){mmsg("Votre téléphone ne peut pas vous localiser. Tapez votre ville.");return;}
+  mmsg("Recherche de votre position…");
+  navigator.geolocation.getCurrentPosition(p=>setLoc(p.coords.latitude,p.coords.longitude,"chez vous"),()=>mmsg("Position refusée. Tapez plutôt votre ville."),{timeout:10000});
+}
+async function meteoCity(){
+  const v=$("mcity").value.trim();
+  if(!v){mmsg("Écrivez le nom de votre ville.");return;}
+  mmsg("Recherche…");
+  try{
+    const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&name="+encodeURIComponent(v));
+    const j=await r.json(),x=j.results&&j.results[0];
+    if(!x){mmsg("Ville introuvable. Essayez un autre nom.");return;}
+    setLoc(x.latitude,x.longitude,x.name);
+  }catch(e){mmsg("Recherche impossible. Vérifiez votre connexion.");}
+}
+function meteoReset(){S.meteo={};save();showMeteo();}
+async function loadMeteo(force){
+  const m=S.meteo;
+  if(!m||!m.loc||meteoBusy)return;
+  if(!force&&m.data&&Date.now()-m.at<3600000)return;
+  meteoBusy=true;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${m.loc.lat}&longitude=${m.loc.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`);
+    const j=await r.json();
+    m.data={now:j.current.temperature_2m,code:j.current.weather_code,max:j.daily.temperature_2m_max[0],min:j.daily.temperature_2m_min[0],rain:j.daily.precipitation_probability_max[0]||0};
+    m.at=Date.now();m.err=false;
+  }catch(e){m.at=Date.now()-3000000;m.err=true;}
+  save();meteoBusy=false;showMeteo();
+}
 const famBusy={};
+const QUOTES=["Chaque petit pas compte, même les plus lents.","Un sourire ne coûte rien et réchauffe toute une journée.","Mieux vaut tard que jamais.","Aujourd’hui est un bon jour pour commencer quelque chose de nouveau.","Petit à petit, l’oiseau fait son nid.","Prendre soin de soi, c’est déjà une belle réussite.","Après la pluie, le beau temps.","Offrez-vous un petit moment rien que pour vous.","À cœur vaillant, rien d’impossible.","Le plus important, c’est d’avancer à son rythme.","Rien ne sert de courir, il faut partir à point.","Une petite promenade éclaircit les idées.","Qui sème la gentillesse récolte des amis.","Chaque jour apporte sa petite surprise.","L’envie vient en essayant.","Il n’est jamais trop tard pour apprendre.","Un bon verre d’eau, c’est un cadeau pour votre corps.","Les petits bonheurs font les grandes journées.","Avec de la patience, tout finit par fleurir.","Appelez quelqu’un que vous aimez : ça fait du bien aux deux.","La santé est le plus précieux des trésors.","Un pas après l’autre, et le chemin se fait tout seul.","Qui va doucement va sainement.","Le soleil se lève pour tout le monde.","Aujourd’hui, faites une chose qui vous fait plaisir.","Pas à pas, on va loin.","Une bonne nuit de sommeil remet les idées en place.","Rire un peu, c’est bon pour le moral.","Ce qui compte, c’est ce que vous faites aujourd’hui.","Prenez le temps de respirer profondément, trois fois.","Chaque matin est une nouvelle page à écrire."];
 function famView(){
   const f=S.family||{};
   let h='<h2 class="fam">Prévenir ma famille</h2><div class="panel">';
@@ -281,6 +340,9 @@ function tick(){
   const n=new Date();
   $("date").textContent=n.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
   $("clock").textContent=pad(n.getHours())+":"+pad(n.getMinutes());
+  const dn=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5);
+  $("quote").textContent="✨ "+QUOTES[dn%QUOTES.length];
+  loadMeteo(false);
   if(!adding&&!(document.activeElement&&document.activeElement.tagName==="INPUT"))render();
   if(S.family&&S.family.topic){
     const tk=dayKey(n),tt=S.taken[tk]||[];
@@ -310,7 +372,7 @@ function tick(){
     if(late>=0&&late<=60&&!(snooze[m.id]>Date.now())){ring(m);break;}
   }
 }
-render();tick();setInterval(tick,10000);
+showMeteo();render();tick();setInterval(tick,10000);
 openDB().then(ok=>{dbOk=ok;return dbAll();}).then(x=>{docs=x;if(tab==="vault"&&!adding)render();});
 </script>
 </body>
