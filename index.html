@@ -79,6 +79,27 @@ nav button[aria-current="page"],.dy[aria-current="true"]{background:linear-gradi
 .offer .ot{font-size:1.3rem;font-weight:700;margin-bottom:4px}
 .offer .big{background:var(--accent-ink);color:var(--accent);margin-top:12px}
 .offer .big:disabled{opacity:.85}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes wave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(18deg)}20%,40%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--accent-ink)}70%,100%{box-shadow:0 0 0 18px transparent}}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(var(--dx),-260px) scale(1.2) rotate(40deg)}}
+#view.anim>*{animation:rise .45s ease both}
+#view.anim>*:nth-child(2){animation-delay:.06s}
+#view.anim>*:nth-child(3){animation-delay:.12s}
+#view.anim>*:nth-child(4){animation-delay:.18s}
+#view.anim>*:nth-child(5){animation-delay:.24s}
+#view.anim>*:nth-child(n+6){animation-delay:.3s}
+.ok.pop{display:inline-block;animation:pop .5s ease both}
+.wave{display:inline-block;transform-origin:70% 70%;animation:wave 2.4s ease .6s 2}
+.quote{animation:rise .6s ease .15s both}
+#alarm:not([hidden]){animation:rise .3s ease both}
+#alarm .yes{animation:pulse 1.6s ease-out infinite}
+nav button{transition:transform .12s,background .2s}
+nav button:active,.dy:active{transform:scale(.93)}
+nav button[aria-current="page"] span{animation:pop .4s ease}
+.cf{position:fixed;top:55vh;font-size:1.6rem;pointer-events:none;z-index:60;animation:fly 1.4s ease-out forwards}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.cf{display:none}}
 .quote{margin:16px 2px 4px;padding:14px 16px;background:var(--surface);border:2px dashed var(--fun);border-radius:18px;font-style:italic;font-weight:700}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:2px solid var(--line)}
 nav button{flex:1;background:var(--bg);color:var(--ink);border-color:var(--line);font-weight:700}
@@ -93,7 +114,7 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 </head>
 <body>
 <header>
-  <div class="hi">Bonjour ! 👋</div>
+  <div class="hi">Bonjour ! <span class="wave">👋</span></div>
   <div class="date" id="date"></div>
   <div class="clock" id="clock"></div>
 </header>
@@ -130,7 +151,25 @@ const parse=k=>new Date(k+"T12:00:00");
 function shift(k,n){const d=parse(k);d.setDate(d.getDate()+n);return dayKey(d);}
 const fmt=k=>parse(k).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
 const dl=a=>[1,2,3,4,5,6,0].filter(d=>a.includes(d)).map(d=>DJ[d]).join(", ");
-function pickDay(k){selKey=k;render();}
+let justTook=null;
+function animate(){
+  const v=$("view");
+  v.classList.remove("anim");void v.offsetWidth;v.classList.add("anim");
+  clearTimeout(window._at);window._at=setTimeout(()=>v.classList.remove("anim"),900);
+}
+function burst(){
+  const em=["🎉","✨","💜","⭐"];
+  for(let i=0;i<14;i++){
+    const s=document.createElement("span");
+    s.textContent=em[i%4];s.className="cf";
+    s.style.left=(20+Math.random()*60)+"vw";
+    s.style.setProperty("--dx",(Math.random()*160-80)+"px");
+    s.style.animationDelay=(Math.random()*.2)+"s";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),1800);
+  }
+}
+function pickDay(k){selKey=k;render();animate();}
 function tgl(b){b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true");}
 function dayBar(){
   const tk=dayKey(new Date()),mon=shift(selKey,-((parse(selKey).getDay()+6)%7));
@@ -140,7 +179,7 @@ function dayBar(){
   return h;
 }
 
-function go(t){tab=t;adding=false;pendingDel=null;render();}
+function go(t){tab=t;adding=false;pendingDel=null;render();animate();}
 function toggleAdd(){adding=!adding;render();if(adding){const f=$("f1");if(f)f.focus();}}
 
 function medsView(){
@@ -150,7 +189,7 @@ function medsView(){
   if(!list.length)h+='<p class="empty">Aucun médicament prévu ce jour-là. Appuyez sur « Ajouter un médicament ».</p>';
   for(const m of list){
     const done=t.includes(m.id),late=!done&&k===tk&&m.time<cur,miss=!done&&k<tk;
-    h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
+    h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok'+(justTook===m.id?" pop":"")+'">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
   h+=adding?`<div class="panel"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
@@ -232,7 +271,7 @@ function gcal(r){
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Mon Quotidien");
 }
 const COMMON=["Amlodipine","Atorvastatine","Bisoprolol","Calcium","Doliprane (paracétamol)","Eliquis","Furosémide","Insuline","Kardégic (aspirine)","Lévothyrox","Metformine","Oméprazole","Périndopril","Ramipril","Rosuvastatine","Spasfon","Valsartan","Ventoline","Vitamine D","Xarelto"];
-for(const m of S.meds)if(!COMMON.includes(m.name)&&!S.myMeds.includes(m.name))S.myMeds.push(m.name);
+if(!S.mig){for(const m of S.meds)if(!COMMON.includes(m.name)&&!S.myMeds.includes(m.name))S.myMeds.push(m.name);S.mig=1;save();}
 function medOpts(){
   const mine=[...S.myMeds].sort();
   const o=n=>`<option>${esc(n)}</option>`;
@@ -300,7 +339,7 @@ function take(id,k){
   k=k||selKey;
   const t=S.taken[k]||[];
   if(!t.includes(id))t.push(id);
-  S.taken[k]=t;for(const x in S.taken)if(x<shift(dayKey(new Date()),-60))delete S.taken[x];save();render();
+  S.taken[k]=t;for(const x in S.taken)if(x<shift(dayKey(new Date()),-60))delete S.taken[x];justTook=id;setTimeout(()=>{justTook=null},1500);save();render();burst();
 }
 
 let ringing=null,beepTimer=null;const snooze={};
