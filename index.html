@@ -116,7 +116,7 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 </div>
 <script>
 const KEY="mon-quotidien-v1";
-let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{}};
+let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{},myMeds:[],hid:[]};
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=id=>document.getElementById(id);
@@ -152,7 +152,7 @@ function medsView(){
     const done=t.includes(m.id),late=!done&&k===tk&&m.time<cur,miss=!done&&k<tk;
     h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
-  h+=adding?`<div class="panel"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (écrire le nom)</option></select></label><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p><label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
+  h+=adding?`<div class="panel"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
 }
 
@@ -232,13 +232,18 @@ function gcal(r){
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Mon Quotidien");
 }
 const COMMON=["Amlodipine","Atorvastatine","Bisoprolol","Calcium","Doliprane (paracétamol)","Eliquis","Furosémide","Insuline","Kardégic (aspirine)","Lévothyrox","Metformine","Oméprazole","Périndopril","Ramipril","Rosuvastatine","Spasfon","Valsartan","Ventoline","Vitamine D","Xarelto"];
+for(const m of S.meds)if(!COMMON.includes(m.name)&&!S.myMeds.includes(m.name))S.myMeds.push(m.name);
 function medOpts(){
-  const mine=[...new Set(S.meds.map(m=>m.name))].sort();
+  const mine=[...S.myMeds].sort();
   const o=n=>`<option>${esc(n)}</option>`;
-  return (mine.length?'<optgroup label="Mes médicaments">'+mine.map(o).join("")+'</optgroup>':"")+'<optgroup label="Médicaments courants">'+COMMON.filter(n=>!mine.includes(n)).map(o).join("")+'</optgroup>';
+  return (mine.length?'<optgroup label="Mes médicaments">'+mine.map(o).join("")+'</optgroup>':"")+'<optgroup label="Médicaments courants">'+COMMON.filter(n=>!mine.includes(n)&&!S.hid.includes(n)).map(o).join("")+'</optgroup>';
 }
+function medReset(){S.hid=[];save();render();}
+function medForget(){const v=$("f0").value;S.myMeds=S.myMeds.filter(x=>x!==v);if(COMMON.includes(v)&&!S.hid.includes(v))S.hid.push(v);save();render();}
 function medPick(s){
   $("f1w").hidden=s.value!=="__autre";
+  $("f0x").hidden=!s.value||s.value==="__autre";
+  $("f0x").textContent="Retirer « "+s.value+" » de ma liste";
   if(s.value==="__autre")$("f1").focus();
 }
 const famBusy={};
@@ -282,7 +287,7 @@ function showErr(m){$("err").textContent=m;}
 function addMed(){
   const pk=$("f0").value,n=(pk&&pk!=="__autre")?pk:$("f1").value.trim(),t=$("f2").value;
   if(!n||!t){showErr("Écrivez le nom et choisissez l’heure.");return;}
-  const days=[...document.querySelectorAll(".dtg[aria-pressed=true]")].map(b=>+b.dataset.d);if(!days.length){showErr("Choisissez au moins un jour.");return;}S.meds.push({id:uid(),name:n,time:t,days});save();adding=false;render();askNotif();tick();
+  const days=[...document.querySelectorAll(".dtg[aria-pressed=true]")].map(b=>+b.dataset.d);if(!days.length){showErr("Choisissez au moins un jour.");return;}if(!COMMON.includes(n)&&!S.myMeds.includes(n))S.myMeds.push(n);S.meds.push({id:uid(),name:n,time:t,days});save();adding=false;render();askNotif();tick();
 }
 function addRdv(){
   const n=$("f1").value.trim(),d=$("f2").value,t=$("f3").value;
