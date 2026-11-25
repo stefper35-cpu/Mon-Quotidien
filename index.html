@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mon Quotidien</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6a35e8">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
 :root{color-scheme:light;--bg:#fff7e6;--surface:#fff;--ink:#2a1b4d;--muted:#5d4f80;--accent:#6a35e8;--accent-ink:#fff;--fun:#b82bd1;--ok:#0f8a5f;--warn:#d6322e;--line:#e6d9bd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -45,7 +49,8 @@ input{display:block;width:100%;margin-top:6px;font:inherit;min-height:60px;paddi
 .sub{color:var(--muted)}
 .miss{color:var(--warn);font-weight:700}
 .lbl{font-weight:700;margin-bottom:8px}
-nav button{padding:10px 4px;font-size:1rem}
+nav{gap:6px}
+nav button{padding:10px 2px;font-size:.8rem}
 .sos{display:block;width:100%;text-align:center;text-decoration:none;background:var(--warn);color:var(--bg);font-weight:700;font-size:1.5rem;padding:18px;border-radius:14px;margin-bottom:12px}
 .sos small{display:block;font-size:1rem;font-weight:400}
 .call{display:inline-block;text-decoration:none;text-align:center;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:1.2rem;padding:16px 22px;border-radius:14px}
@@ -70,12 +75,10 @@ nav button[aria-current="page"],.dy[aria-current="true"]{background:linear-gradi
 .dy.today:not([aria-current="true"]){border-color:var(--fun)}
 .code{font-family:monospace;font-size:1.2rem;font-weight:700;background:var(--bg);border:2px dashed var(--line);border-radius:12px;padding:12px;margin:10px 0 14px;word-break:break-all;user-select:all}
 .fam{margin-top:28px}
-.meteo{margin:12px 2px 4px;padding:14px 16px;background:var(--surface);border:2px solid var(--line);border-radius:18px;box-shadow:0 4px 0 var(--line)}
-.mt{font-size:1.7rem;font-weight:700}
-.mw{font-size:1rem;font-weight:400;color:var(--muted)}
-.mad{font-weight:700;color:var(--accent);margin-top:4px}
-.mrow{display:flex;gap:8px;margin:10px 0}
-.mrow input{margin-top:0;flex:1;min-width:0}
+.offer{background:linear-gradient(135deg,var(--accent),var(--fun));color:var(--accent-ink);border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 4px 0 var(--line)}
+.offer .ot{font-size:1.3rem;font-weight:700;margin-bottom:4px}
+.offer .big{background:var(--accent-ink);color:var(--accent);margin-top:12px}
+.offer .big:disabled{opacity:.85}
 .quote{margin:16px 2px 4px;padding:14px 16px;background:var(--surface);border:2px dashed var(--fun);border-radius:18px;font-style:italic;font-weight:700}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:2px solid var(--line)}
 nav button{flex:1;background:var(--bg);color:var(--ink);border-color:var(--line);font-weight:700}
@@ -95,12 +98,12 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
   <div class="clock" id="clock"></div>
 </header>
 <div class="quote" id="quote"></div>
-<div class="meteo" id="meteo"></div>
 <main id="view"></main>
 <nav>
   <button data-t="meds" onclick="go('meds')"><span>💊</span>Pilules</button>
   <button data-t="rdv" onclick="go('rdv')"><span>📅</span>Agenda</button>
   <button data-t="urg" onclick="go('urg')"><span>🚨</span>Urgence</button>
+  <button data-t="fam" onclick="go('fam')"><span>👪</span>Famille</button>
   <button data-t="vault" onclick="go('vault')"><span>🗂️</span>Papiers</button>
 </nav>
 <div id="viewer" hidden><img id="vimg" alt=""><button class="big" onclick="closeDoc()">Fermer</button></div>
@@ -113,7 +116,7 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 </div>
 <script>
 const KEY="mon-quotidien-v1";
-let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{},meteo:{}};
+let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{}};
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=id=>document.getElementById(id);
@@ -149,7 +152,7 @@ function medsView(){
     const done=t.includes(m.id),late=!done&&k===tk&&m.time<cur,miss=!done&&k<tk;
     h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
-  h+=adding?`<div class="panel"><label>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
+  h+=adding?`<div class="panel"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (écrire le nom)</option></select></label><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p><label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
 }
 
@@ -167,7 +170,12 @@ function rdvView(){
 }
 
 function urgView(){
-  let h='<h2>En cas d’urgence</h2><a class="sos" href="tel:15">Appeler le 15<small>SAMU, urgence médicale</small></a><a class="sos" href="tel:112">Appeler le 112<small>Toutes urgences</small></a><h2>Mes contacts</h2>';
+  let h='<h2>En cas d’urgence</h2><a class="sos" href="tel:15">Appeler le 15<small>SAMU, urgence médicale</small></a><a class="sos" href="tel:112">Appeler le 112<small>Toutes urgences</small></a>';
+  h+='<p class="empty">Pour joindre un proche, ouvrez l’onglet Famille.</p>';
+  return h;
+}
+function famTab(){
+  let h='<h2>Appeler ma famille</h2>';
   if(!S.contacts.length)h+='<p class="empty">Aucun contact pour le moment. Ajoutez un proche, votre médecin ou un voisin.</p>';
   for(const c of S.contacts)h+=`<div class="card"><div class="grow"><div class="name">${esc(c.name)}</div><div class="sub">${esc(c.phone)}</div></div><a class="call" href="tel:${c.phone.replace(/[^\d+]/g,"")}">Appeler</a><button class="link" onclick="delContact('${c.id}')">Retirer</button></div>`;
   h+=adding?`<div class="panel"><label>Nom<input id="f1" type="text" placeholder="Ma fille, Dr Martin…" autocomplete="off"></label><label>Téléphone<input id="f2" type="tel" autocomplete="off"></label><div class="err" id="err"></div><button class="big wide" onclick="addContact()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un contact</button>';
@@ -223,60 +231,31 @@ function gcal(r){
   const e=dayKey(en).replace(/-/g,"")+"T"+pad(en.getHours())+pad(en.getMinutes())+"00";
   return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Mon Quotidien");
 }
-let meteoBusy=false;
-const WX=c=>c===0?["☀️","Ensoleillé"]:c<=2?["🌤️","Plutôt dégagé"]:c===3?["☁️","Nuageux"]:c<=48?["🌫️","Brouillard"]:c<=57?["🌦️","Bruine"]:c<=67?["🌧️","Pluie"]:c<=77?["🌨️","Neige"]:c<=82?["🌦️","Averses"]:c<=86?["🌨️","Averses de neige"]:["⛈️","Orage"];
-function advice(d){
-  if(d.rain>=50||d.code>=95)return "Prenez un parapluie ☔";
-  if(d.max>=28)return "Il fera chaud : pensez à boire de l’eau 💧";
-  if(d.max<=6)return "Il fera froid : couvrez-vous bien 🧣";
-  if(d.code<=2)return "Belle journée pour une petite promenade 🚶";
-  return "Une journée tranquille, profitez-en.";
+const COMMON=["Amlodipine","Atorvastatine","Bisoprolol","Calcium","Doliprane (paracétamol)","Eliquis","Furosémide","Insuline","Kardégic (aspirine)","Lévothyrox","Metformine","Oméprazole","Périndopril","Ramipril","Rosuvastatine","Spasfon","Valsartan","Ventoline","Vitamine D","Xarelto"];
+function medOpts(){
+  const mine=[...new Set(S.meds.map(m=>m.name))].sort();
+  const o=n=>`<option>${esc(n)}</option>`;
+  return (mine.length?'<optgroup label="Mes médicaments">'+mine.map(o).join("")+'</optgroup>':"")+'<optgroup label="Médicaments courants">'+COMMON.filter(n=>!mine.includes(n)).map(o).join("")+'</optgroup>';
 }
-const mmsg=t=>{const e=$("mmsg");if(e)e.textContent=t;};
-function showMeteo(){
-  const el=$("meteo"),m=S.meteo||{};
-  if(!m.loc){el.innerHTML='<div class="mt">☀️ Météo du jour</div><button class="big wide" onclick="meteoGeo()">📍 Utiliser ma position</button><div class="mrow"><input id="mcity" type="text" placeholder="Ou tapez votre ville" autocomplete="off"><button class="big" onclick="meteoCity()">OK</button></div><div class="sub" id="mmsg"></div>';return;}
-  const d=m.data;
-  if(!d){el.innerHTML='<div class="mt">☀️ Météo du jour</div><div class="sub">'+(m.err?"Météo indisponible pour le moment.":"Chargement…")+'</div><button class="link" onclick="meteoReset()">Changer de lieu</button>';return;}
-  const w=WX(d.code);
-  el.innerHTML=`<div class="mt">${w[0]} ${Math.round(d.now)}° <span class="mw">${w[1]}, ${esc(m.loc.name)}</span></div><div>Aujourd’hui : ${Math.round(d.min)}° à ${Math.round(d.max)}°, pluie ${d.rain} %</div><div class="mad">${advice(d)}</div><button class="link" onclick="meteoReset()">Changer de lieu</button>`;
-}
-function setLoc(lat,lon,name){S.meteo={loc:{lat,lon,name},data:null,at:0};save();showMeteo();loadMeteo(true);}
-function meteoGeo(){
-  if(!navigator.geolocation){mmsg("Votre téléphone ne peut pas vous localiser. Tapez votre ville.");return;}
-  mmsg("Recherche de votre position…");
-  navigator.geolocation.getCurrentPosition(p=>setLoc(p.coords.latitude,p.coords.longitude,"chez vous"),()=>mmsg("Position refusée. Tapez plutôt votre ville."),{timeout:10000});
-}
-async function meteoCity(){
-  const v=$("mcity").value.trim();
-  if(!v){mmsg("Écrivez le nom de votre ville.");return;}
-  mmsg("Recherche…");
-  try{
-    const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&name="+encodeURIComponent(v));
-    const j=await r.json(),x=j.results&&j.results[0];
-    if(!x){mmsg("Ville introuvable. Essayez un autre nom.");return;}
-    setLoc(x.latitude,x.longitude,x.name);
-  }catch(e){mmsg("Recherche impossible. Vérifiez votre connexion.");}
-}
-function meteoReset(){S.meteo={};save();showMeteo();}
-async function loadMeteo(force){
-  const m=S.meteo;
-  if(!m||!m.loc||meteoBusy)return;
-  if(!force&&m.data&&Date.now()-m.at<3600000)return;
-  meteoBusy=true;
-  try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${m.loc.lat}&longitude=${m.loc.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`);
-    const j=await r.json();
-    m.data={now:j.current.temperature_2m,code:j.current.weather_code,max:j.daily.temperature_2m_max[0],min:j.daily.temperature_2m_min[0],rain:j.daily.precipitation_probability_max[0]||0};
-    m.at=Date.now();m.err=false;
-  }catch(e){m.at=Date.now()-3000000;m.err=true;}
-  save();meteoBusy=false;showMeteo();
+function medPick(s){
+  $("f1w").hidden=s.value!=="__autre";
+  if(s.value==="__autre")$("f1").focus();
 }
 const famBusy={};
 const QUOTES=["Chaque petit pas compte, même les plus lents.","Un sourire ne coûte rien et réchauffe toute une journée.","Mieux vaut tard que jamais.","Aujourd’hui est un bon jour pour commencer quelque chose de nouveau.","Petit à petit, l’oiseau fait son nid.","Prendre soin de soi, c’est déjà une belle réussite.","Après la pluie, le beau temps.","Offrez-vous un petit moment rien que pour vous.","À cœur vaillant, rien d’impossible.","Le plus important, c’est d’avancer à son rythme.","Rien ne sert de courir, il faut partir à point.","Une petite promenade éclaircit les idées.","Qui sème la gentillesse récolte des amis.","Chaque jour apporte sa petite surprise.","L’envie vient en essayant.","Il n’est jamais trop tard pour apprendre.","Un bon verre d’eau, c’est un cadeau pour votre corps.","Les petits bonheurs font les grandes journées.","Avec de la patience, tout finit par fleurir.","Appelez quelqu’un que vous aimez : ça fait du bien aux deux.","La santé est le plus précieux des trésors.","Un pas après l’autre, et le chemin se fait tout seul.","Qui va doucement va sainement.","Le soleil se lève pour tout le monde.","Aujourd’hui, faites une chose qui vous fait plaisir.","Pas à pas, on va loin.","Une bonne nuit de sommeil remet les idées en place.","Rire un peu, c’est bon pour le moral.","Ce qui compte, c’est ce que vous faites aujourd’hui.","Prenez le temps de respirer profondément, trois fois.","Chaque matin est une nouvelle page à écrire."];
+const OWNER="mq-vote-ata9ed49p1l5";
+function offer(){
+  return `<div class="offer"><div class="ot">⭐ Mode famille Premium</div><div>L’alerte famille sera bientôt proposée en abonnement : <b>4 € par mois</b>, sans engagement. Pendant la période de test, elle reste gratuite.</div><button class="big wide" onclick="wantSub()"${S.wants?" disabled":""}>${S.wants?"✓ Merci, c’est noté":"Ça m’intéresse"}</button></div>`;
+}
+function wantSub(){
+  if(S.wants)return;
+  S.wants=1;save();
+  try{fetch("https://ntfy.sh/"+OWNER,{method:"POST",body:"⭐ Quelqu’un a touché « Ça m’intéresse » pour l’abonnement famille (4 € par mois)."}).catch(()=>{});}catch(e){}
+  render();
+}
 function famView(){
   const f=S.family||{};
-  let h='<h2 class="fam">Prévenir ma famille</h2><div class="panel">';
+  let h='<h2 class="fam">Prévenir ma famille</h2>'+offer()+'<div class="panel">';
   if(!f.topic)return h+'<p>Un proche reçoit un message sur son téléphone si vous n’avez pas pris un médicament 30 minutes après l’heure prévue. C’est gratuit.</p><button class="big wide" onclick="famOn()">Activer</button></div>';
   h+=`<label>Votre prénom<input type="text" value="${esc(f.name||"")}" oninput="S.family.name=this.value;save()" autocomplete="off"></label><p><b>Pour votre proche :</b> installer l’application gratuite <b>ntfy</b>, puis ajouter un abonnement avec ce code :</p><div class="code">${esc(f.topic)}</div><button class="big wide" onclick="famTest()">Envoyer un message test</button><p class="sub" id="fammsg"></p><button class="ghost" onclick="famOff()">Désactiver</button></div>`;
   return h;
@@ -296,12 +275,12 @@ function famTest(){
 }
 function render(){
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.t===tab?"page":"false"));
-  $("view").innerHTML=tab==="meds"?medsView():tab==="rdv"?rdvView():tab==="urg"?urgView():vaultView();
+  $("view").innerHTML=tab==="meds"?medsView():tab==="rdv"?rdvView():tab==="urg"?urgView():tab==="fam"?famTab():vaultView();
 }
 
 function showErr(m){$("err").textContent=m;}
 function addMed(){
-  const n=$("f1").value.trim(),t=$("f2").value;
+  const pk=$("f0").value,n=(pk&&pk!=="__autre")?pk:$("f1").value.trim(),t=$("f2").value;
   if(!n||!t){showErr("Écrivez le nom et choisissez l’heure.");return;}
   const days=[...document.querySelectorAll(".dtg[aria-pressed=true]")].map(b=>+b.dataset.d);if(!days.length){showErr("Choisissez au moins un jour.");return;}S.meds.push({id:uid(),name:n,time:t,days});save();adding=false;render();askNotif();tick();
 }
@@ -342,7 +321,6 @@ function tick(){
   $("clock").textContent=pad(n.getHours())+":"+pad(n.getMinutes());
   const dn=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5);
   $("quote").textContent="✨ "+QUOTES[dn%QUOTES.length];
-  loadMeteo(false);
   if(!adding&&!(document.activeElement&&document.activeElement.tagName==="INPUT"))render();
   if(S.family&&S.family.topic){
     const tk=dayKey(n),tt=S.taken[tk]||[];
@@ -372,7 +350,8 @@ function tick(){
     if(late>=0&&late<=60&&!(snooze[m.id]>Date.now())){ring(m);break;}
   }
 }
-showMeteo();render();tick();setInterval(tick,10000);
+render();tick();setInterval(tick,10000);
+try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
 openDB().then(ok=>{dbOk=ok;return dbAll();}).then(x=>{docs=x;if(tab==="vault"&&!adding)render();});
 </script>
 </body>
