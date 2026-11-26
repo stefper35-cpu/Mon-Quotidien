@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mon Quotidien</title>
+<title>Sérénité</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#6a35e8">
+<meta name="theme-color" content="#0f5c8a">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&display=swap">
 <style>
-:root{color-scheme:light;--bg:#fff7e6;--surface:#fff;--ink:#2a1b4d;--muted:#5d4f80;--accent:#6a35e8;--accent-ink:#fff;--fun:#b82bd1;--ok:#0f8a5f;--warn:#d6322e;--line:#e6d9bd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1a1233;--surface:#261b4a;--ink:#fff4df;--muted:#c9bcf0;--accent:#ffc933;--accent-ink:#2a1b4d;--fun:#ff7ab0;--ok:#5fe0a8;--warn:#ff8a85;--line:#443571}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#1a1233;--surface:#261b4a;--ink:#fff4df;--muted:#c9bcf0;--accent:#ffc933;--accent-ink:#2a1b4d;--fun:#ff7ab0;--ok:#5fe0a8;--warn:#ff8a85;--line:#443571}
+:root{color-scheme:light;--bg:#f3f6f9;--surface:#fff;--ink:#1b2a38;--muted:#566877;--accent:#0f5c8a;--accent-ink:#fff;--fun:#2a7fb8;--ok:#1f7a4d;--warn:#b3261e;--line:#d6dfe7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1b26;--surface:#172635;--ink:#eaf1f6;--muted:#a3b4c2;--accent:#6fb7e8;--accent-ink:#0b2233;--fun:#4a9bd0;--ok:#5fd09a;--warn:#ff8f86;--line:#2a4054}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1b26;--surface:#172635;--ink:#eaf1f6;--muted:#a3b4c2;--accent:#6fb7e8;--accent-ink:#0b2233;--fun:#4a9bd0;--ok:#5fd09a;--warn:#ff8f86;--line:#2a4054}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -110,22 +110,87 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 #alarm button{width:100%;max-width:420px;font-size:1.4rem;font-weight:700;min-height:76px}
 #alarm .yes{background:var(--accent-ink);color:var(--accent)}
 #alarm .later{background:transparent;color:var(--accent-ink);border-color:var(--accent-ink)}
+
+/* style professionnel */
+header{background:var(--accent);color:var(--accent-ink);border-radius:16px;box-shadow:none;padding:18px 20px}
+header .hi{font-size:1rem;font-weight:400;opacity:.9}
+header .date{font-size:1.25rem}
+header .clock{font-size:2.6rem}
+.quote{background:transparent;border:0;border-left:4px solid var(--accent);border-radius:0;font-style:normal;font-weight:400;color:var(--muted);padding:6px 14px;margin:16px 2px 8px}
+h2{font-size:1.35rem;letter-spacing:.2px}
+.card,.panel{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(15,40,60,.08),0 2px 8px rgba(15,40,60,.05)}
+.time{background:transparent;color:var(--accent);padding:0;border-radius:0;font-size:1.6rem;min-width:84px}
+.big,.call,.sos,.ghost{border-radius:12px;box-shadow:none}
+.big{font-size:1.1rem}
+.big:active,.call:active,.sos:active{transform:scale(.98)}
+.offer{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;box-shadow:0 1px 2px rgba(15,40,60,.08)}
+.offer .ot{color:var(--accent)}
+.offer .big{background:var(--accent);color:var(--accent-ink)}
+nav{border-radius:0;border-top:1px solid var(--line);box-shadow:0 -2px 10px rgba(15,40,60,.08)}
+nav button{border-radius:12px;border:1px solid transparent;background:transparent;color:var(--muted)}
+nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.dy{border-radius:12px;border-width:1px}
+.dy[aria-current="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dy.today:not([aria-current="true"]){border-color:var(--accent);border-width:2px}
+.wk2 button{border-radius:12px}
+input,select{border-radius:10px;border-width:1px}
+
+/* style raffiné */
+body{max-width:640px;margin:0 auto}
+h2,header .date,header .clock,.offer .ot,.quote{font-family:Fraunces,Georgia,"Times New Roman",serif;font-weight:600}
+header{display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:center;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(15,40,60,.06)}
+header .hi{grid-column:1;color:var(--muted);font-size:1rem;opacity:1}
+header .date{grid-column:1;font-size:1.35rem;color:var(--ink)}
+header .clock{grid-column:2;grid-row:1/3;font-size:2.4rem;color:var(--accent);font-variant-numeric:tabular-nums}
+.quote{font-style:italic;font-weight:400;font-size:1.05rem}
+.prog{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.prog .pt{margin-bottom:8px}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--ok);transition:width .6s ease}
+.time{font-variant-numeric:tabular-nums}
+.card:has(.ok){border-left:4px solid var(--ok)}
+.card:has(.late),.card:has(.miss){border-left:4px solid var(--warn)}
+nav button{font-size:.78rem;letter-spacing:.2px}
+nav button span{display:flex;justify-content:center;margin-bottom:3px}
+nav button span svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button[aria-current="page"]{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);border-color:transparent}
+
+/* finitions */
+body{font-size:1.25rem}
+header{grid-template-columns:1fr auto auto}
+.aa{grid-column:3;grid-row:1/3;min-height:44px;padding:4px 12px;font-size:.95rem;font-weight:700;background:transparent;border:1px solid var(--line);color:var(--accent);border-radius:10px;margin-left:10px}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:640px;margin:0 auto;max-height:88vh;overflow-y:auto;border:0;border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(10,25,40,.25);animation:sheetup .3s ease both}
+#view:has(.sheet)::after{content:"";position:fixed;inset:0;background:rgba(10,25,40,.45);z-index:25}
+@keyframes sheetup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.emptybox{text-align:center;color:var(--muted);padding:18px 8px 24px}
+.emptybox svg{width:64px;height:64px;fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;opacity:.5;margin-bottom:8px}
+
+/* couleurs au choix */
+.tools{grid-column:3;grid-row:1/3;display:flex;gap:6px;align-items:center;margin-left:10px}
+.tools .aa{margin-left:0}
+.dot{display:block;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+
+/* nom de l'application */
+.brand{grid-column:1;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:1rem;letter-spacing:.4px;color:var(--accent)}
+header .clock,.tools{grid-row:1/4}
 </style>
 </head>
 <body>
 <header>
-  <div class="hi">Bonjour ! <span class="wave">👋</span></div>
+  <div class="brand">Sérénité</div>
+  <div class="hi" id="hi">Bonjour</div>
   <div class="date" id="date"></div>
   <div class="clock" id="clock"></div>
+  <div class="tools"><button class="aa" onclick="textSize()" aria-label="Changer la taille du texte">Aa</button><button class="aa" onclick="nextTheme()" aria-label="Changer la couleur"><span class="dot"></span></button></div>
 </header>
 <div class="quote" id="quote"></div>
 <main id="view"></main>
 <nav>
-  <button data-t="meds" onclick="go('meds')"><span>💊</span>Pilules</button>
-  <button data-t="rdv" onclick="go('rdv')"><span>📅</span>Agenda</button>
-  <button data-t="urg" onclick="go('urg')"><span>🚨</span>Urgence</button>
-  <button data-t="fam" onclick="go('fam')"><span>👪</span>Famille</button>
-  <button data-t="vault" onclick="go('vault')"><span>🗂️</span>Papiers</button>
+  <button data-t="meds" onclick="go('meds')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>Pilules</button>
+  <button data-t="rdv" onclick="go('rdv')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Agenda</button>
+  <button data-t="urg" onclick="go('urg')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/></svg></span>Urgence</button>
+  <button data-t="fam" onclick="go('fam')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.7"/><path d="M17.5 14.2a5.5 5.5 0 0 1 4 5.3"/></svg></span>Famille</button>
+  <button data-t="vault" onclick="go('vault')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>Papiers</button>
 </nav>
 <div id="viewer" hidden><img id="vimg" alt=""><button class="big" onclick="closeDoc()">Fermer</button></div>
 <div id="alarm" role="alertdialog" aria-live="assertive" hidden>
@@ -157,18 +222,19 @@ function animate(){
   v.classList.remove("anim");void v.offsetWidth;v.classList.add("anim");
   clearTimeout(window._at);window._at=setTimeout(()=>v.classList.remove("anim"),900);
 }
-function burst(){
-  const em=["🎉","✨","💜","⭐"];
-  for(let i=0;i<14;i++){
-    const s=document.createElement("span");
-    s.textContent=em[i%4];s.className="cf";
-    s.style.left=(20+Math.random()*60)+"vw";
-    s.style.setProperty("--dx",(Math.random()*160-80)+"px");
-    s.style.animationDelay=(Math.random()*.2)+"s";
-    document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1800);
-  }
+const THEMES=[{n:"Bleu"},{n:"Vert",l:["#1b6b4a","#2e8f65"],d:["#6fd3a0","#49b886","#08241a"]},{n:"Bordeaux",l:["#8a1f3d","#b03a5b"],d:["#f08aa5","#d4607f","#2a0a14"]},{n:"Violet",l:["#5b3aa8","#7d5bd0"],d:["#b9a2f2","#9a7be0","#1a1033"]}];
+function applyTheme(){
+  const t=THEMES[S.theme||0]||THEMES[0],r=document.documentElement.style;
+  const dark=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches;
+  if(!t.l){["--accent","--fun","--accent-ink"].forEach(v=>r.removeProperty(v));}
+  else if(dark){r.setProperty("--accent",t.d[0]);r.setProperty("--fun",t.d[1]);r.setProperty("--accent-ink",t.d[2]);}
+  else{r.setProperty("--accent",t.l[0]);r.setProperty("--fun",t.l[1]);r.setProperty("--accent-ink","#fff");}
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||m.content;
 }
+function nextTheme(){S.theme=((S.theme||0)+1)%THEMES.length;save();applyTheme();}
+function applyZoom(){document.documentElement.style.fontSize=[16,18,20][S.zoom||0]+"px";}
+function textSize(){S.zoom=((S.zoom||0)+1)%3;save();applyZoom();}
 function pickDay(k){selKey=k;render();animate();}
 function tgl(b){b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true");}
 function dayBar(){
@@ -186,12 +252,13 @@ function medsView(){
   const n=new Date(),tk=dayKey(n),k=selKey,t=S.taken[k]||[],cur=pad(n.getHours())+":"+pad(n.getMinutes()),wd=parse(k).getDay();
   const list=S.meds.filter(m=>(m.days||ALL).includes(wd)).sort((a,b)=>a.time.localeCompare(b.time));
   let h=dayBar()+"<h2>"+(k===tk?"Aujourd’hui":fmt(k))+"</h2>";
-  if(!list.length)h+='<p class="empty">Aucun médicament prévu ce jour-là. Appuyez sur « Ajouter un médicament ».</p>';
+  if(list.length){const nd=list.filter(m=>t.includes(m.id)).length;h+=`<div class="prog"><div class="pt"><b>${nd} sur ${list.length}</b> médicament${list.length>1?"s":""} pris</div><div class="bar"><i style="width:${Math.round(nd/list.length*100)}%"></i></div></div>`;}
+  if(!list.length)h+='<div class="emptybox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg><div>Aucun médicament prévu ce jour-là.</div><div class="sub">Appuyez sur « Ajouter un médicament ».</div></div>';
   for(const m of list){
     const done=t.includes(m.id),late=!done&&k===tk&&m.time<cur,miss=!done&&k<tk;
     h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok'+(justTook===m.id?" pop":"")+'">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
-  h+=adding?`<div class="panel"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
+  h+=adding?`<div class="panel sheet"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
 }
 
@@ -202,14 +269,14 @@ function rdvView(){
   if(!list.length)h+='<p class="empty">Aucun rendez-vous prévu. Appuyez sur « Ajouter un rendez-vous ».</p>';
   for(const r of list){
     const d=new Date(r.date+"T"+r.time).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-    h+=`<div class="card"><div class="grow"><div class="name">${esc(r.title)}</div><div>${d} à ${r.time}</div><div class="sub">🔔 Rappel ${rl(r.remind||60)}</div></div><a class="call" href="${gcal(r)}" target="_blank" rel="noopener">📅 Ajouter à l’agenda</a><button class="link" onclick="delRdv('${r.id}')">Retirer</button></div>`;
+    h+=`<div class="card"><div class="grow"><div class="name">${esc(r.title)}</div><div>${d} à ${r.time}</div><div class="sub">Rappel ${rl(r.remind||60)}</div></div><a class="call" href="${gcal(r)}" target="_blank" rel="noopener">Ajouter à l’agenda</a><button class="link" onclick="delRdv('${r.id}')">Retirer</button></div>`;
   }
-  h+=adding?`<div class="panel"><label>Rendez-vous<input id="f1" type="text" placeholder="Dr Martin, dentiste…" autocomplete="off"></label><label>Date<input id="f2" type="date" value="${dayKey(new Date())}"></label><label>Heure<input id="f3" type="time" value="10:00"></label><label>Me prévenir<select id="f4"><option value="15">15 minutes avant</option><option value="60" selected>1 heure avant</option><option value="120">2 heures avant</option><option value="1440">1 jour avant</option></select></label><div class="err" id="err"></div><button class="big wide" onclick="addRdv()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un rendez-vous</button>';
+  h+=adding?`<div class="panel sheet"><label>Rendez-vous<input id="f1" type="text" placeholder="Dr Martin, dentiste…" autocomplete="off"></label><label>Date<input id="f2" type="date" value="${dayKey(new Date())}"></label><label>Heure<input id="f3" type="time" value="10:00"></label><label>Me prévenir<select id="f4"><option value="15">15 minutes avant</option><option value="60" selected>1 heure avant</option><option value="120">2 heures avant</option><option value="1440">1 jour avant</option></select></label><div class="err" id="err"></div><button class="big wide" onclick="addRdv()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un rendez-vous</button>';
   return h;
 }
 
 function urgView(){
-  let h='<h2>En cas d’urgence</h2><a class="sos" href="tel:15">Appeler le 15<small>SAMU, urgence médicale</small></a><a class="sos" href="tel:112">Appeler le 112<small>Toutes urgences</small></a>';
+  let h='<h2>En cas d’urgence</h2><a class="sos" href="tel:15">Appeler le 15<small>SAMU, urgence médicale</small></a><a class="sos" href="tel:18">Appeler le 18<small>Pompiers</small></a><a class="sos" href="tel:112">Appeler le 112<small>Toutes urgences</small></a>';
   h+='<p class="empty">Pour joindre un proche, ouvrez l’onglet Famille.</p>';
   return h;
 }
@@ -217,7 +284,7 @@ function famTab(){
   let h='<h2>Appeler ma famille</h2>';
   if(!S.contacts.length)h+='<p class="empty">Aucun contact pour le moment. Ajoutez un proche, votre médecin ou un voisin.</p>';
   for(const c of S.contacts)h+=`<div class="card"><div class="grow"><div class="name">${esc(c.name)}</div><div class="sub">${esc(c.phone)}</div></div><a class="call" href="tel:${c.phone.replace(/[^\d+]/g,"")}">Appeler</a><button class="link" onclick="delContact('${c.id}')">Retirer</button></div>`;
-  h+=adding?`<div class="panel"><label>Nom<input id="f1" type="text" placeholder="Ma fille, Dr Martin…" autocomplete="off"></label><label>Téléphone<input id="f2" type="tel" autocomplete="off"></label><div class="err" id="err"></div><button class="big wide" onclick="addContact()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un contact</button>';
+  h+=adding?`<div class="panel sheet"><label>Nom<input id="f1" type="text" placeholder="Ma fille, Dr Martin…" autocomplete="off"></label><label>Téléphone<input id="f2" type="tel" autocomplete="off"></label><div class="err" id="err"></div><button class="big wide" onclick="addContact()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un contact</button>';
   h+=famView();
   return h;
 }
@@ -239,7 +306,7 @@ function vaultView(){
   const list=[...docs].sort((a,b)=>b.date.localeCompare(a.date));
   if(!list.length)h+='<p class="empty">Aucun papier pour le moment. Photographiez une ordonnance, votre mutuelle ou votre carte vitale.</p>';
   for(const d of list)h+=`<div class="card"><div class="grow"><div class="name">${esc(d.name)}</div><div class="sub">${esc(d.cat)}, ajouté le ${new Date(d.date).toLocaleDateString("fr-FR")}</div></div><button class="big" onclick="viewDoc('${d.id}')">Voir</button><button class="link" onclick="delDoc('${d.id}')">${pendingDel===d.id?"Confirmer":"Retirer"}</button></div>`;
-  h+=adding?`<div class="panel"><label>Nom du papier<input id="f1" type="text" placeholder="Ordonnance du Dr Martin" autocomplete="off"></label><label>Type<select id="f2">${CATS.map(c=>`<option>${c}</option>`).join("")}</select></label><label>Photo<input id="f3" type="file" accept="image/*"></label><div class="err" id="err"></div><button class="big wide" id="vsave" onclick="addDoc()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un papier</button>';
+  h+=adding?`<div class="panel sheet"><label>Nom du papier<input id="f1" type="text" placeholder="Ordonnance du Dr Martin" autocomplete="off"></label><label>Type<select id="f2">${CATS.map(c=>`<option>${c}</option>`).join("")}</select></label><label>Photo<input id="f3" type="file" accept="image/*"></label><div class="err" id="err"></div><button class="big wide" id="vsave" onclick="addDoc()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un papier</button>';
   return h;
 }
 function shrink(f){return new Promise((res,rej)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{const s=Math.min(1,1800/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext("2d").drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),"image/jpeg",0.8);};i.onerror=()=>{URL.revokeObjectURL(u);rej();};i.src=u;});}
@@ -268,7 +335,7 @@ function gcal(r){
   const f=(d,t)=>d.replace(/-/g,"")+"T"+t.replace(":","")+"00";
   const en=new Date(new Date(r.date+"T"+r.time).getTime()+3600000);
   const e=dayKey(en).replace(/-/g,"")+"T"+pad(en.getHours())+pad(en.getMinutes())+"00";
-  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Mon Quotidien");
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(r.title)+"&dates="+f(r.date,r.time)+"/"+e+"&details="+encodeURIComponent("Ajouté depuis Sérénité");
 }
 const COMMON=["Amlodipine","Atorvastatine","Bisoprolol","Calcium","Doliprane (paracétamol)","Eliquis","Furosémide","Insuline","Kardégic (aspirine)","Lévothyrox","Metformine","Oméprazole","Périndopril","Ramipril","Rosuvastatine","Spasfon","Valsartan","Ventoline","Vitamine D","Xarelto"];
 if(!S.mig){for(const m of S.meds)if(!COMMON.includes(m.name)&&!S.myMeds.includes(m.name))S.myMeds.push(m.name);S.mig=1;save();}
@@ -289,12 +356,12 @@ const famBusy={};
 const QUOTES=["Chaque petit pas compte, même les plus lents.","Un sourire ne coûte rien et réchauffe toute une journée.","Mieux vaut tard que jamais.","Aujourd’hui est un bon jour pour commencer quelque chose de nouveau.","Petit à petit, l’oiseau fait son nid.","Prendre soin de soi, c’est déjà une belle réussite.","Après la pluie, le beau temps.","Offrez-vous un petit moment rien que pour vous.","À cœur vaillant, rien d’impossible.","Le plus important, c’est d’avancer à son rythme.","Rien ne sert de courir, il faut partir à point.","Une petite promenade éclaircit les idées.","Qui sème la gentillesse récolte des amis.","Chaque jour apporte sa petite surprise.","L’envie vient en essayant.","Il n’est jamais trop tard pour apprendre.","Un bon verre d’eau, c’est un cadeau pour votre corps.","Les petits bonheurs font les grandes journées.","Avec de la patience, tout finit par fleurir.","Appelez quelqu’un que vous aimez : ça fait du bien aux deux.","La santé est le plus précieux des trésors.","Un pas après l’autre, et le chemin se fait tout seul.","Qui va doucement va sainement.","Le soleil se lève pour tout le monde.","Aujourd’hui, faites une chose qui vous fait plaisir.","Pas à pas, on va loin.","Une bonne nuit de sommeil remet les idées en place.","Rire un peu, c’est bon pour le moral.","Ce qui compte, c’est ce que vous faites aujourd’hui.","Prenez le temps de respirer profondément, trois fois.","Chaque matin est une nouvelle page à écrire."];
 const OWNER="mq-vote-ata9ed49p1l5";
 function offer(){
-  return `<div class="offer"><div class="ot">⭐ Mode famille Premium</div><div>L’alerte famille sera bientôt proposée en abonnement : <b>4 € par mois</b>, sans engagement. Pendant la période de test, elle reste gratuite.</div><button class="big wide" onclick="wantSub()"${S.wants?" disabled":""}>${S.wants?"✓ Merci, c’est noté":"Ça m’intéresse"}</button></div>`;
+  return `<div class="offer"><div class="ot">Mode famille Premium</div><div>L’alerte famille sera bientôt proposée en abonnement : <b>2 € par mois</b>, sans engagement. Pendant la période de test, elle reste gratuite.</div><button class="big wide" onclick="wantSub()"${S.wants?" disabled":""}>${S.wants?"✓ Merci, c’est noté":"Ça m’intéresse"}</button></div>`;
 }
 function wantSub(){
   if(S.wants)return;
   S.wants=1;save();
-  try{fetch("https://ntfy.sh/"+OWNER,{method:"POST",body:"⭐ Quelqu’un a touché « Ça m’intéresse » pour l’abonnement famille (4 € par mois)."}).catch(()=>{});}catch(e){}
+  try{fetch("https://ntfy.sh/"+OWNER,{method:"POST",body:"⭐ Quelqu’un a touché « Ça m’intéresse » pour l’abonnement famille (2 € par mois)."}).catch(()=>{});}catch(e){}
   render();
 }
 function famView(){
@@ -315,7 +382,7 @@ function famSend(text){
 }
 function famTest(){
   $("fammsg").textContent="Envoi…";
-  famSend((S.family.name||"Votre proche")+" : ceci est un message test de Mon Quotidien. ✅").then(ok=>{$("fammsg").textContent=ok?"Message envoyé. Votre proche doit l’avoir reçu.":"Envoi impossible. Ouvrez l’application dans Chrome, pas dans l’application Claude, et vérifiez la connexion.";});
+  famSend((S.family.name||"Votre proche")+" : ceci est un message test de Sérénité. ✅").then(ok=>{$("fammsg").textContent=ok?"Message envoyé. Votre proche doit l’avoir reçu.":"Envoi impossible. Ouvrez l’application dans Chrome, pas dans l’application Claude, et vérifiez la connexion.";});
 }
 function render(){
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.t===tab?"page":"false"));
@@ -339,7 +406,7 @@ function take(id,k){
   k=k||selKey;
   const t=S.taken[k]||[];
   if(!t.includes(id))t.push(id);
-  S.taken[k]=t;for(const x in S.taken)if(x<shift(dayKey(new Date()),-60))delete S.taken[x];justTook=id;setTimeout(()=>{justTook=null},1500);save();render();burst();
+  S.taken[k]=t;for(const x in S.taken)if(x<shift(dayKey(new Date()),-60))delete S.taken[x];justTook=id;setTimeout(()=>{justTook=null},1500);save();render();
 }
 
 let ringing=null,beepTimer=null;const snooze={};
@@ -363,8 +430,9 @@ function tick(){
   const n=new Date();
   $("date").textContent=n.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
   $("clock").textContent=pad(n.getHours())+":"+pad(n.getMinutes());
+  $("hi").textContent=n.getHours()<12?"Bonjour":n.getHours()<18?"Bon après-midi":"Bonsoir";
   const dn=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5);
-  $("quote").textContent="✨ "+QUOTES[dn%QUOTES.length];
+  $("quote").textContent=QUOTES[dn%QUOTES.length];
   if(!adding&&!(document.activeElement&&document.activeElement.tagName==="INPUT"))render();
   if(S.family&&S.family.topic){
     const tk=dayKey(n),tt=S.taken[tk]||[];
@@ -394,6 +462,8 @@ function tick(){
     if(late>=0&&late<=60&&!(snooze[m.id]>Date.now())){ring(m);break;}
   }
 }
+applyZoom();applyTheme();
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);}catch(e){}
 render();tick();setInterval(tick,10000);
 try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
 openDB().then(ok=>{dbOk=ok;return dbAll();}).then(x=>{docs=x;if(tab==="vault"&&!adding)render();});
