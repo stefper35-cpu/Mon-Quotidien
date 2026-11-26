@@ -179,6 +179,10 @@ header .clock,.tools{grid-row:1/4}
 .swatch{min-height:48px}
 .swatch .pill{margin:0;width:26px;height:26px}
 .alertbox{background:var(--surface);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.help{margin-top:14px;border-top:1px solid var(--line);padding-top:6px}
+.help summary{font-weight:700;color:var(--accent);cursor:pointer;min-height:44px;display:flex;align-items:center}
+.help ol,.help ul{padding-left:22px;margin:8px 0}
+.help li{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -453,9 +457,12 @@ function wantSub(){
 function famView(){
   const f=S.family||{};
   let h='<h2 class="fam">Prévenir ma famille</h2>'+offer()+'<div class="panel">';
-  if(!f.topic)return h+'<p>Un proche reçoit un message sur son téléphone si vous n’avez pas pris un médicament 30 minutes après l’heure prévue. C’est gratuit.</p><button class="big wide" onclick="famOn()">Activer</button></div>';
-  h+=`<label>Votre prénom<input type="text" value="${esc(f.name||"")}" oninput="S.family.name=this.value;save()" autocomplete="off"></label><p><b>Pour votre proche :</b> installer l’application gratuite <b>ntfy</b>, puis ajouter un abonnement avec ce code :</p><div class="code">${esc(f.topic)}</div><button class="big wide" onclick="famTest()">Envoyer un message test</button><p class="sub" id="fammsg"></p><button class="ghost" onclick="famOff()">Désactiver</button></div>`;
+  if(!f.topic)return h+'<p>Un proche reçoit un message sur son téléphone si vous n’avez pas pris un médicament 30 minutes après l’heure prévue. C’est gratuit.</p><button class="big wide" onclick="famOn()">Activer</button>'+famHelp()+'</div>';
+  h+=`<label>Votre prénom<input type="text" value="${esc(f.name||"")}" oninput="S.family.name=this.value;save()" autocomplete="off"></label><p><b>Pour votre proche :</b> installer l’application gratuite <b>ntfy</b>, puis ajouter un abonnement avec ce code :</p><div class="code">${esc(f.topic)}</div><button class="big wide" onclick="famTest()">Envoyer un message test</button><p class="sub" id="fammsg"></p><button class="ghost" onclick="famOff()">Désactiver</button>${famHelp()}</div>`;
   return h;
+}
+function famHelp(){
+  return '<details class="help"><summary>Comment ça marche ?</summary><ol><li>Appuyez sur « Activer » : l’application crée un code secret.</li><li>Votre proche installe l’application gratuite <b>ntfy</b> et ajoute un abonnement avec ce code.</li><li>Si un médicament n’est pas marqué « J’ai pris » 30 minutes après l’heure prévue, votre proche reçoit un message avec votre prénom et l’heure. Un seul message par médicament et par jour.</li></ol><p><b>À savoir</b></p><ul><li>L’application doit être ouverte sur votre téléphone, avec une connexion Internet. Sinon, aucune alerte n’est envoyée.</li><li>Le message ne contient pas le nom du médicament.</li><li>Ce n’est pas un service d’urgence : l’alerte ne détecte ni malaise ni chute. En cas d’urgence, appelez le 15 ou le 112.</li><li>Le code est un secret : ne le donnez qu’aux personnes à prévenir.</li></ul></details>';
 }
 function famOn(){
   let r;try{r=Array.from(crypto.getRandomValues(new Uint8Array(9)),b=>(b%36).toString(36)).join("");}catch(e){r=uid()+uid();}
