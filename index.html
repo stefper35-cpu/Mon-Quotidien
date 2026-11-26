@@ -186,6 +186,7 @@ header .clock,.tools{grid-row:1/4}
 .hrow{margin-bottom:10px}
 .okdone{background:var(--surface);border:1px solid var(--ok);border-left:4px solid var(--ok);border-radius:14px;padding:12px 14px;margin-bottom:14px;color:var(--ok);font-weight:700}
 .okset{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.offer .ol{margin:8px 0 8px;padding-left:20px}.offer .ol li{margin-bottom:4px}.offer .ofree{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -540,7 +541,7 @@ const famBusy={};
 const QUOTES=["Chaque petit pas compte, même les plus lents.","Un sourire ne coûte rien et réchauffe toute une journée.","Mieux vaut tard que jamais.","Aujourd’hui est un bon jour pour commencer quelque chose de nouveau.","Petit à petit, l’oiseau fait son nid.","Prendre soin de soi, c’est déjà une belle réussite.","Après la pluie, le beau temps.","Offrez-vous un petit moment rien que pour vous.","À cœur vaillant, rien d’impossible.","Le plus important, c’est d’avancer à son rythme.","Rien ne sert de courir, il faut partir à point.","Une petite promenade éclaircit les idées.","Qui sème la gentillesse récolte des amis.","Chaque jour apporte sa petite surprise.","L’envie vient en essayant.","Il n’est jamais trop tard pour apprendre.","Un bon verre d’eau, c’est un cadeau pour votre corps.","Les petits bonheurs font les grandes journées.","Avec de la patience, tout finit par fleurir.","Appelez quelqu’un que vous aimez : ça fait du bien aux deux.","La santé est le plus précieux des trésors.","Un pas après l’autre, et le chemin se fait tout seul.","Qui va doucement va sainement.","Le soleil se lève pour tout le monde.","Aujourd’hui, faites une chose qui vous fait plaisir.","Pas à pas, on va loin.","Une bonne nuit de sommeil remet les idées en place.","Rire un peu, c’est bon pour le moral.","Ce qui compte, c’est ce que vous faites aujourd’hui.","Prenez le temps de respirer profondément, trois fois.","Chaque matin est une nouvelle page à écrire."];
 const OWNER="mq-vote-ata9ed49p1l5";
 function offer(){
-  return `<div class="offer"><div class="ot">Mode famille Premium</div><div>L’alerte famille sera bientôt proposée en abonnement : <b>2 € par mois</b>, sans engagement. Pendant la période de test, elle reste gratuite.</div><button class="big wide" onclick="wantSub()"${S.wants?" disabled":""}>${S.wants?"✓ Merci, c’est noté":"Ça m’intéresse"}</button></div>`;
+  return `<div class="offer"><div class="ot">Mode famille Premium</div><div>Bientôt en abonnement : <b>2 € par mois</b>, sans engagement. Pendant la période de test, tout reste gratuit.</div><ul class="ol"><li>Alerte famille qui marche même application fermée</li><li>« Je vais bien » fiable chaque jour</li><li>Sauvegarde automatique en ligne, photos comprises</li><li>Plusieurs proches prévenus et plusieurs profils</li><li>Rapport mensuel en PDF pour le médecin</li><li>Alertes par SMS, en option</li></ul><div class="sub ofree">Toujours gratuits : les rappels, l’agenda, les urgences et la fiche santé.</div><button class="big wide" onclick="wantSub()"${S.wants?" disabled":""}>${S.wants?"✓ Merci, c’est noté":"Ça m’intéresse"}</button></div>`;
 }
 function wantSub(){
   if(S.wants)return;
