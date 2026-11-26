@@ -174,6 +174,11 @@ header{grid-template-columns:1fr auto auto}
 .brand{grid-column:1;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:1rem;letter-spacing:.4px;color:var(--accent)}
 header .clock,.tools{grid-row:1/4}
 .ql{display:block;font-family:"Atkinson Hyperlegible",system-ui,sans-serif;font-style:normal;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:2px}
+.pill{display:inline-block;width:18px;height:18px;border-radius:50%;margin-right:8px;vertical-align:-2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28)}
+.pill.cap{width:28px;height:13px;border-radius:7px;transform:rotate(-35deg);margin-right:10px}
+.swatch{min-height:48px}
+.swatch .pill{margin:0;width:26px;height:26px}
+.alertbox{background:var(--surface);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -203,7 +208,7 @@ header .clock,.tools{grid-row:1/4}
 </div>
 <script>
 const KEY="mon-quotidien-v1";
-let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{},myMeds:[],hid:[]};
+let S={meds:[],taken:{},rdvs:[],contacts:[],family:{},famSent:{},myMeds:[],hid:[],measures:[]};
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=id=>document.getElementById(id);
@@ -246,7 +251,7 @@ function dayBar(){
   return h;
 }
 
-function go(t){tab=t;adding=false;pendingDel=null;render();animate();}
+function go(t){tab=t;adding=false;addingMeas=false;pendingDel=null;render();animate();}
 function toggleAdd(){adding=!adding;render();if(adding){const f=$("f1");if(f)f.focus();}}
 
 function medsView(){
@@ -254,12 +259,14 @@ function medsView(){
   const list=S.meds.filter(m=>(m.days||ALL).includes(wd)).sort((a,b)=>a.time.localeCompare(b.time));
   let h=dayBar()+"<h2>"+(k===tk?"Aujourd’hui":fmt(k))+"</h2>";
   if(list.length){const nd=list.filter(m=>t.includes(m.id)).length;h+=`<div class="prog"><div class="pt"><b>${nd} sur ${list.length}</b> médicament${list.length>1?"s":""} pris</div><div class="bar"><i style="width:${Math.round(nd/list.length*100)}%"></i></div></div>`;}
+  const low=S.meds.filter(m=>m.stock!=null&&m.stock<=7);if(low.length&&k===tk)h+=`<div class="alertbox"><b>À renouveler :</b> ${low.map(m=>esc(m.name)+" ("+m.stock+")").join(", ")}</div>`;
   if(!list.length)h+='<div class="emptybox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg><div>Aucun médicament prévu ce jour-là.</div><div class="sub">Appuyez sur « Ajouter un médicament ».</div></div>';
   for(const m of list){
     const done=t.includes(m.id),late=!done&&k===tk&&m.time<cur,miss=!done&&k<tk;
-    h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${esc(m.name)}</div>${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok'+(justTook===m.id?" pop":"")+'">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
+    h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${pillIcon(m)}${esc(m.name)}</div>${m.dose?'<div class="sub">'+esc(m.dose)+'</div>':""}${stockLine(m)}${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok'+(justTook===m.id?" pop":"")+'">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}${m.stock!=null&&m.stock<=7?`<button class="link" onclick="refill('${m.id}')">J’ai renouvelé</button>`:""}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
-  h+=adding?`<div class="panel sheet"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
+  h+=statsCard();
+  h+=adding?`<div class="panel sheet"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><label>Dose (facultatif)<input id="f5" type="text" placeholder="1 comprimé" autocomplete="off"></label><div class="lbl">Aspect du médicament (facultatif)</div><div class="week" id="f6">${PCOL.map((c,i)=>`<button class="dtg opt swatch" data-i="${i}" aria-pressed="false" aria-label="${c[0]}" onclick="pickCol(this)"><span class="pill" style="background:${c[1]}"></span></button>`).join("")}</div><div class="week" id="f7"><button class="dtg opt" data-s="0" aria-pressed="true" onclick="pickShape(this)">Comprimé</button><button class="dtg opt" data-s="1" aria-pressed="false" onclick="pickShape(this)">Gélule</button></div><label>Stock actuel (facultatif)<input id="f8" type="number" inputmode="numeric" min="0" placeholder="30"></label><label>Une boîte contient (facultatif)<input id="f9" type="number" inputmode="numeric" min="1" placeholder="30"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
 }
 
@@ -273,6 +280,7 @@ function rdvView(){
     h+=`<div class="card"><div class="grow"><div class="name">${esc(r.title)}</div><div>${d} à ${r.time}</div><div class="sub">Rappel ${rl(r.remind||60)}</div></div><a class="call" href="${gcal(r)}" target="_blank" rel="noopener">Ajouter à l’agenda</a><button class="link" onclick="delRdv('${r.id}')">Retirer</button></div>`;
   }
   h+=adding?`<div class="panel sheet"><label>Rendez-vous<input id="f1" type="text" placeholder="Dr Martin, dentiste…" autocomplete="off"></label><label>Date<input id="f2" type="date" value="${dayKey(new Date())}"></label><label>Heure<input id="f3" type="time" value="10:00"></label><label>Me prévenir<select id="f4"><option value="15">15 minutes avant</option><option value="60" selected>1 heure avant</option><option value="120">2 heures avant</option><option value="1440">1 jour avant</option></select></label><div class="err" id="err"></div><button class="big wide" onclick="addRdv()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un rendez-vous</button>';
+  h+=measView();
   return h;
 }
 
@@ -341,6 +349,78 @@ function gcal(r){
 const GROUPS=[["Douleur et fièvre › Paracétamol", ["Doliprane (paracétamol)", "Dafalgan", "Efferalgan", "Paracétamol", "Codoliprane", "Dafalgan codéine"]], ["Douleur et fièvre › Antalgiques de palier 2", ["Tramadol", "Contramal", "Topalgic", "Ixprim", "Zaldiar", "Lamaline", "Izalgi"]], ["Douleur et fièvre › Opioïdes forts", ["Skenan (morphine)", "Actiskenan", "Oxycontin", "Oxynorm", "Durogesic (fentanyl)"]], ["Douleur et fièvre › Anti-inflammatoires (AINS)", ["Ibuprofène", "Advil", "Nurofen", "Voltarène (diclofénac)", "Kétoprofène (Profénid)", "Apranax (naproxène)", "Celebrex (célécoxib)", "Mobic (méloxicam)", "Feldene (piroxicam)"]], ["Douleur et fièvre › Corticoïdes", ["Solupred (prednisolone)", "Cortancyl (prednisone)", "Médrol (méthylprednisolone)", "Celestène (bétaméthasone)", "Dexaméthasone"]], ["Douleur et fièvre › Migraine (triptans)", ["Imigrane (sumatriptan)", "Maxalt (rizatriptan)", "Zomig (zolmitriptan)", "Relpax (élétriptan)"]], ["Douleur et fièvre › Douleurs nerveuses", ["Lyrica (prégabaline)", "Neurontin (gabapentine)"]], ["Douleur et fièvre › Myorelaxants", ["Coltramyl", "Lioresal (baclofène)", "Décontractyl"]], ["Cœur et tension › IEC", ["Ramipril", "Triatec", "Périndopril", "Coversyl", "Énalapril", "Renitec", "Lisinopril", "Zestril", "Captopril", "Lopril"]], ["Cœur et tension › Sartans (ARA II)", ["Valsartan", "Tareg", "Losartan", "Cozaar", "Irbésartan", "Aprovel", "Candésartan", "Atacand", "Telmisartan", "Micardis", "Olmésartan", "Alteis"]], ["Cœur et tension › Bêta-bloquants", ["Bisoprolol", "Cardensiel", "Aténolol", "Ténormine", "Métoprolol", "Lopressor", "Seloken", "Nébivolol", "Temerit", "Propranolol (Avlocardyl)", "Carvédilol (Kredex)"]], ["Cœur et tension › Inhibiteurs calciques", ["Amlodipine", "Amlor", "Lercanidipine", "Zanidip", "Nifédipine", "Adalate", "Nicardipine (Loxen)", "Diltiazem", "Tildiem", "Vérapamil (Isoptine)", "Félodipine (Flodil)"]], ["Cœur et tension › Diurétiques", ["Furosémide", "Lasilix", "Hydrochlorothiazide", "Esidrex", "Indapamide", "Fludex", "Spironolactone", "Aldactone", "Bumétanide (Burinex)", "Torasémide (Torem)", "Éplérénone (Inspra)"]], ["Cœur et tension › Associations", ["Cotareg", "Coaprovel", "Hyzaar", "Bipreterax", "Triplixam", "Exforge"]], ["Cœur et tension › Autres antihypertenseurs", ["Physiotens (moxonidine)", "Catapressan (clonidine)", "Aldomet (méthyldopa)"]], ["Cœur et tension › Angine de poitrine et insuffisance cardiaque", ["Trinitrine (Natispray)", "Risordan", "Corvasal", "Ranexa (ranolazine)", "Entresto", "Digoxine", "Procoralan (ivabradine)", "Adancor (nicorandil)"]], ["Cœur et tension › Troubles du rythme", ["Cordarone (amiodarone)", "Multaq", "Flécaïne", "Sotalex (sotalol)", "Rythmol"]], ["Sang › Antiagrégants", ["Kardégic (aspirine)", "Aspirine", "Aspégic", "Plavix (clopidogrel)", "Brilique (ticagrélor)", "Efient"]], ["Sang › Anticoagulants", ["Eliquis", "Xarelto", "Pradaxa", "Lixiana", "Previscan", "Coumadine (warfarine)", "Lovenox (injection)"]], ["Sang › Veines", ["Daflon", "Ginkor Fort", "Cyclo 3 Fort"]], ["Cholestérol › Statines", ["Atorvastatine", "Tahor", "Rosuvastatine", "Crestor", "Simvastatine", "Zocor", "Pravastatine", "Elisor", "Fluvastatine (Lescol)"]], ["Cholestérol › Autres", ["Ézétimibe (Ezetrol)", "Fénofibrate (Lipanthyl)", "Inegy"]], ["Diabète › Comprimés", ["Metformine", "Glucophage", "Stagid", "Gliclazide", "Diamicron", "Glimépiride", "Amarel", "Januvia", "Janumet", "Galvus", "Jardiance", "Forxiga", "Xigduo", "Novonorm"]], ["Diabète › Insulines et injections", ["Insuline", "Lantus", "Toujeo", "Levemir", "Tresiba", "NovoRapid", "Humalog", "Apidra", "Humulin", "Ozempic", "Trulicity", "Victoza", "Mounjaro"]], ["Digestion › Anti-acides et protecteurs de l'estomac", ["Oméprazole", "Mopral", "Ésoméprazole", "Inexium", "Pantoprazole", "Eupantol", "Lansoprazole", "Lanzor", "Pariet", "Gaviscon", "Maalox", "Rennie", "Topaal", "Phosphalugel"]], ["Digestion › Nausées", ["Motilium (dompéridone)", "Primpéran (métoclopramide)", "Vogalène", "Zophren"]], ["Digestion › Spasmes et diarrhée", ["Spasfon", "Débridat", "Météospasmyl", "Smecta", "Imodium", "Tiorfan", "Ultra-levure"]], ["Digestion › Constipation", ["Duphalac", "Forlax", "Movicol", "Transipeg", "Microlax", "Dulcolax", "Importal"]], ["Respiration › Asthme et bronchites", ["Ventoline", "Bricanyl", "Spiriva", "Seretide", "Symbicort", "Foster", "Atrovent", "Singulair", "Flixotide", "Pulmicort"]], ["Respiration › Toux et gorge", ["Mucomyst", "Exomuc", "Fluditec", "Rhinathiol", "Toplexil"]], ["Allergies › Antihistaminiques", ["Aerius", "Zyrtec", "Kestin", "Xyzall", "Clarityne", "Atarax"]], ["Allergies › Sprays nasaux", ["Nasonex", "Flixonase", "Avamys"]], ["Hormones › Thyroïde", ["Lévothyrox", "L-Thyroxine", "Euthyrox", "Néo-Mercazole"]], ["Hormones › Ménopause", ["Oestrogel", "Utrogestan", "Duphaston"]], ["Prostate et vessie › Prostate", ["Tamsulosine (Josir)", "Alfuzosine (Xatral)", "Urorec", "Finastéride (Chibro-Proscar)", "Avodart"]], ["Prostate et vessie › Vessie", ["Vésicare", "Driptane", "Betmiga", "Urispas"]], ["Os et articulations › Ostéoporose", ["Fosamax", "Actonel", "Bonviva", "Aclasta", "Prolia (injection)", "Evista"]], ["Os et articulations › Calcium et vitamine D", ["Vitamine D", "Uvedose", "Zyma D", "Stérogyl", "Calcium", "Orocal D3", "Cacit D3", "Idéos", "Fixical"]], ["Os et articulations › Goutte", ["Allopurinol (Zyloric)", "Adenuric", "Colchicine", "Colchimax"]], ["Os et articulations › Rhumatismes (traitements de fond)", ["Méthotrexate", "Plaquenil", "Salazopyrine"]], ["Sommeil et anxiété › Benzodiazépines", ["Lexomil (bromazépam)", "Xanax (alprazolam)", "Lysanxia", "Témesta (lorazépam)", "Valium (diazépam)", "Séresta", "Tranxène", "Rivotril", "Urbanyl", "Havlane", "Noctamide"]], ["Sommeil et anxiété › Somnifères et sommeil", ["Stilnox (zolpidem)", "Zolpidem", "Imovane (zopiclone)", "Zopiclone", "Donormyl", "Mélatonine (Circadin)", "Euphytose"]], ["Humeur › Antidépresseurs", ["Sertraline (Zoloft)", "Escitalopram (Seroplex)", "Citalopram (Seropram)", "Paroxétine (Deroxat)", "Fluoxétine (Prozac)", "Venlafaxine (Effexor)", "Duloxétine (Cymbalta)", "Mirtazapine (Norset)", "Amitriptyline (Laroxyl)", "Anafranil", "Brintellix", "Valdoxan"]], ["Humeur › Antipsychotiques et régulateurs", ["Risperdal", "Abilify", "Zyprexa", "Seroquel", "Haldol", "Tercian", "Téralithe (lithium)"]], ["Cerveau › Maladie de Parkinson", ["Modopar", "Sinemet", "Stalevo", "Requip", "Sifrol", "Azilect", "Comtan", "Artane"]], ["Cerveau › Maladie d'Alzheimer", ["Aricept (donépézil)", "Exelon (rivastigmine)", "Reminyl", "Ebixa (mémantine)"]], ["Cerveau › Épilepsie", ["Keppra", "Depakine", "Tégrétol", "Lamictal", "Trileptal", "Épitomax", "Gardénal", "Vimpat"]], ["Cerveau › Vertiges et mémoire", ["Tanganil", "Betaserc", "Tanakan"]], ["Infections › Antibiotiques", ["Amoxicilline", "Clamoxyl", "Augmentin", "Pyostacine", "Zithromax (azithromycine)", "Zeclar (clarithromycine)", "Doxycycline", "Ciflox (ciprofloxacine)", "Tavanic (lévofloxacine)", "Bactrim", "Monuril", "Furadantine", "Flagyl", "Orelox", "Zinnat"]], ["Infections › Antiviraux et antifongiques", ["Zovirax", "Valtrex", "Tamiflu", "Mycostatine", "Triflucan", "Lamisil"]], ["Peau › Crèmes et pommades", ["Diprosone", "Dermoval", "Locoid", "Bépanthène", "Biafine", "Fucidine", "Flammazine", "Nizoral"]], ["Yeux › Collyres", ["Xalatan", "Travatan", "Lumigan", "Timolol", "Azarga", "Cosopt", "Hylo-Gel", "Systane", "Vismed", "Tobrex"]], ["Vitamines et minéraux", ["Vitamine B12", "Spéciafoldine (acide folique)", "Tardyferon (fer)", "Fumafer", "Ferrostrane", "Magné B6", "Mag 2", "Vitamine C", "Potassium (Diffu-K)", "Zinc", "Oméga 3"]], ["Arrêt du tabac", ["Nicorette", "Nicopatch", "Niquitin"]]];
 const COMMON=GROUPS.flatMap(g=>g[1]);
 if(!S.mig){for(const m of S.meds)if(!COMMON.includes(m.name)&&!S.myMeds.includes(m.name))S.myMeds.push(m.name);S.mig=1;save();}
+S.meds.forEach(m=>{if(!m.created)m.created=dayKey(new Date());});
+let addingMeas=false;
+const PCOL=[["Blanc","#f4f4f4"],["Jaune","#f5c518"],["Rose","#f28ab2"],["Rouge","#d64545"],["Orange","#f39a2d"],["Vert","#4caf7d"],["Bleu","#4a90d9"],["Marron","#8d6e4f"]];
+const MEAS=[["Tension","mmHg"],["Glycémie","g/L"],["Poids","kg"],["Pouls","bpm"],["Température","°C"]];
+function pillIcon(m){return m.color?'<span class="pill'+(m.shape?" cap":"")+'" style="background:'+m.color+'"></span>':"";}
+function stockLine(m){
+  if(m.stock==null)return "";
+  if(m.stock<=0)return '<div class="late">Stock épuisé</div>';
+  if(m.stock<=7)return '<div class="late">Il reste '+m.stock+', pensez au renouvellement</div>';
+  return '<div class="sub">Stock : '+m.stock+'</div>';
+}
+function refill(id){const m=S.meds.find(x=>x.id===id);if(m){m.stock=(m.stock||0)+(m.box||30);save();render();}}
+function pickCol(b){const on=b.getAttribute("aria-pressed")==="true";document.querySelectorAll("#f6 .opt").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed",on?"false":"true");}
+function pickShape(b){document.querySelectorAll("#f7 .opt").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");}
+function adherence(days){
+  const n=new Date(),tk=dayKey(n),cur=pad(n.getHours())+":"+pad(n.getMinutes());
+  let tot=0,ok=0;const per={};
+  for(let i=0;i<days;i++){
+    const k=shift(tk,-i),wd=parse(k).getDay(),t=S.taken[k]||[];
+    for(const m of S.meds){
+      if((m.created||tk)>k||!(m.days||ALL).includes(wd))continue;
+      if(k===tk&&m.time>cur&&!t.includes(m.id))continue;
+      tot++;const p=per[m.name]||(per[m.name]={a:0,b:0});p.b++;
+      if(t.includes(m.id)){ok++;p.a++;}
+    }
+  }
+  return {tot,ok,per};
+}
+function streak(){
+  const tk=dayKey(new Date());let c=0;
+  for(let i=0;i<60;i++){
+    const k=shift(tk,-i),wd=parse(k).getDay(),t=S.taken[k]||[];
+    const due=S.meds.filter(m=>(m.created||tk)<=k&&(m.days||ALL).includes(wd));
+    if(!due.length)continue;
+    if(due.every(m=>t.includes(m.id)))c++;else if(i>0)break;
+  }
+  return c;
+}
+function statsCard(){
+  if(!S.meds.length)return "";
+  const a=adherence(7),pc=a.tot?Math.round(a.ok/a.tot*100):0,sk=streak();
+  return `<div class="prog"><div class="pt"><b>Mon suivi sur 7 jours</b></div><div class="pt">${a.tot?pc+" % des prises effectuées ("+a.ok+" sur "+a.tot+")":"Pas encore de prises à compter."}</div><div class="bar"><i style="width:${pc}%"></i></div>${sk>1?'<div class="pt sub" style="margin-top:8px">Série en cours : '+sk+' jours sans oubli</div>':""}<button class="ghost" onclick="shareReport()">Partager mon suivi avec mon médecin</button></div>`;
+}
+function reportText(){
+  const a=adherence(7),L=["Suivi Sérénité, 7 derniers jours","Prises effectuées : "+a.ok+" sur "+a.tot+(a.tot?" ("+Math.round(a.ok/a.tot*100)+" %)":"")];
+  for(const n in a.per)L.push("- "+n+" : "+a.per[n].a+" sur "+a.per[n].b);
+  const ms=(S.measures||[]).slice(-10);
+  if(ms.length){L.push("","Mesures :");for(const m of ms)L.push("- "+m.date+" : "+m.type+" "+m.value+" "+m.unit);}
+  L.push("","Ce suivi est un aide-mémoire, il ne remplace pas un avis médical.");
+  return L.join("\n");
+}
+async function shareReport(){
+  const txt=reportText();
+  try{if(navigator.share){await navigator.share({title:"Mon suivi Sérénité",text:txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(txt);alert("Votre suivi est copié. Vous pouvez le coller dans un message.");}catch(e){prompt("Copiez ce texte :",txt);}
+}
+function measView(){
+  const list=[...(S.measures||[])].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,6);
+  let h='<h2 class="fam">Mes mesures</h2>';
+  if(!list.length)h+='<p class="empty">Notez votre tension, votre poids ou votre glycémie pour les montrer à votre médecin.</p>';
+  for(const m of list)h+=`<div class="card"><div class="grow"><div class="name">${esc(m.type)} : ${esc(m.value)} ${esc(m.unit)}</div><div class="sub">${new Date(m.date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</div></div><button class="link" onclick="delMeas('${m.id}')">Retirer</button></div>`;
+  h+=addingMeas?`<div class="panel sheet"><label>Type de mesure<select id="g1">${MEAS.map(x=>`<option>${x[0]} (${x[1]})</option>`).join("")}</select></label><label>Valeur<input id="g2" type="text" inputmode="decimal" placeholder="Ex : 13/8 ou 72,5" autocomplete="off"></label><div class="err" id="err"></div><button class="big wide" onclick="addMeas()">Enregistrer</button><button class="ghost" onclick="toggleMeas()">Annuler</button></div>`:'<button class="big wide" onclick="toggleMeas()">+ Ajouter une mesure</button>';
+  return h;
+}
+function toggleMeas(){addingMeas=!addingMeas;render();}
+function addMeas(){
+  const i=$("g1").selectedIndex,v=$("g2").value.trim();
+  if(!v){showErr("Écrivez la valeur mesurée.");return;}
+  S.measures.push({id:uid(),date:dayKey(new Date()),type:MEAS[i][0],value:v,unit:MEAS[i][1]});
+  save();addingMeas=false;render();
+}
+function delMeas(id){S.measures=S.measures.filter(m=>m.id!==id);save();render();}
 function medOpts(){
   const mine=[...S.myMeds].sort(),o=n=>`<option>${esc(n)}</option>`;
   let h=mine.length?'<optgroup label="Mes médicaments">'+mine.map(o).join("")+'</optgroup>':"";
@@ -399,7 +479,7 @@ function showErr(m){$("err").textContent=m;}
 function addMed(){
   const pk=$("f0").value,n=(pk&&pk!=="__autre")?pk:$("f1").value.trim(),t=$("f2").value;
   if(!n||!t){showErr("Écrivez le nom et choisissez l’heure.");return;}
-  const days=[...document.querySelectorAll(".dtg[aria-pressed=true]")].map(b=>+b.dataset.d);if(!days.length){showErr("Choisissez au moins un jour.");return;}if(!COMMON.includes(n)&&!S.myMeds.includes(n))S.myMeds.push(n);S.meds.push({id:uid(),name:n,time:t,days});save();adding=false;render();askNotif();tick();
+  const days=[...document.querySelectorAll(".dtg:not(.opt)[aria-pressed=true]")].map(b=>+b.dataset.d);if(!days.length){showErr("Choisissez au moins un jour.");return;}if(!COMMON.includes(n)&&!S.myMeds.includes(n))S.myMeds.push(n);const ci=document.querySelector("#f6 [aria-pressed=true]"),sh=document.querySelector("#f7 [aria-pressed=true]"),st=$("f8").value.trim(),sk=st===""?null:Math.max(0,parseInt(st,10)||0);S.meds.push({id:uid(),name:n,time:t,days,dose:$("f5").value.trim(),color:ci?PCOL[+ci.dataset.i][1]:null,shape:sh?+sh.dataset.s:0,stock:sk,box:parseInt($("f9").value,10)||sk||30,created:dayKey(new Date())});save();adding=false;render();askNotif();tick();
 }
 function addRdv(){
   const n=$("f1").value.trim(),d=$("f2").value,t=$("f3").value;
@@ -411,7 +491,7 @@ function delRdv(id){S.rdvs=S.rdvs.filter(r=>r.id!==id);save();render();}
 function take(id,k){
   k=k||selKey;
   const t=S.taken[k]||[];
-  if(!t.includes(id))t.push(id);
+  if(!t.includes(id)){t.push(id);const mm=S.meds.find(x=>x.id===id);if(mm&&mm.stock!=null)mm.stock=Math.max(0,mm.stock-1);}
   S.taken[k]=t;for(const x in S.taken)if(x<shift(dayKey(new Date()),-60))delete S.taken[x];justTook=id;setTimeout(()=>{justTook=null},1500);save();render();
 }
 
@@ -425,7 +505,7 @@ function beep(){
   }catch(e){}
 }
 function ring(m){
-  ringing=m;$("alarm-head").textContent=m.rdv?"Rappel de rendez-vous":"C’est l’heure de prendre";$("alarm-yes").textContent=m.rdv?"OK, merci":"J’ai pris";$("alarm-name").textContent=m.name;$("alarm-time").textContent=m.rdv?m.when:"prévu à "+m.time;notify(m);
+  ringing=m;$("alarm-head").textContent=m.rdv?"Rappel de rendez-vous":"C’est l’heure de prendre";$("alarm-yes").textContent=m.rdv?"OK, merci":"J’ai pris";$("alarm-name").textContent=m.name+(m.dose?" ("+m.dose+")":"");$("alarm-time").textContent=m.rdv?m.when:"prévu à "+m.time;notify(m);
   $("alarm").hidden=false;beep();beepTimer=setInterval(beep,4000);
 }
 function stopRing(){clearInterval(beepTimer);$("alarm").hidden=true;ringing=null;}
@@ -439,7 +519,7 @@ function tick(){
   $("hi").textContent=n.getHours()<12?"Bonjour":n.getHours()<18?"Bon après-midi":"Bonsoir";
   const dn=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5);
   $("quote").innerHTML='<span class="ql">Citation du jour</span>'+QUOTES[dn%QUOTES.length];
-  if(!adding&&!(document.activeElement&&document.activeElement.tagName==="INPUT"))render();
+  if(!adding&&!addingMeas&&!(document.activeElement&&document.activeElement.tagName==="INPUT"))render();
   if(S.family&&S.family.topic){
     const tk=dayKey(n),tt=S.taken[tk]||[];
     for(const m of S.meds){
