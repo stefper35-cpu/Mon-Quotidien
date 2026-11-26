@@ -556,6 +556,7 @@ function tick(){
   }
 }
 applyZoom();applyTheme();
+{const hh=(location.hash||"").slice(1);if(["meds","rdv","urg","fam","vault"].includes(hh))tab=hh;}
 try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);}catch(e){}
 render();tick();setInterval(tick,10000);
 try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
