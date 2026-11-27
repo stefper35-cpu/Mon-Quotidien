@@ -284,10 +284,21 @@ function dayBar(){
   return h;
 }
 
-function go(t){tab=t;adding=false;addingMeas=false;editHealth=false;pendingDel=null;render();animate();}
+function go(t){tab=t;adding=false;addingMeas=false;editHealth=false;allMeds=false;pendingDel=null;render();animate();}
 function toggleAdd(){adding=!adding;render();if(adding){const f=$("f1");if(f)f.focus();}}
 
+let allMeds=false;
+function showAllMeds(v){allMeds=v;pendingDel=null;render();}
+function delMedAll(id){if(pendingDel!==id){pendingDel=id;render();return;}pendingDel=null;S.meds=S.meds.filter(m=>m.id!==id);save();render();}
+function allMedsView(){
+  const list=[...S.meds].sort((a,b)=>a.time.localeCompare(b.time)||a.name.localeCompare(b.name));
+  let h='<h2>Tous mes médicaments</h2><p class="sub">Voici tout ce qui est enregistré, quel que soit le jour.</p>';
+  if(!list.length)h+='<div class="emptybox"><div>Aucun médicament enregistré.</div></div>';
+  for(const m of list)h+=`<div class="card"><div class="time">${m.time}</div><div class="grow"><div class="name">${pillIcon(m)}${esc(m.name)}</div>${m.dose?'<div class="sub">'+esc(m.dose)+'</div>':""}<div class="sub">${m.days&&m.days.length<7?dl(m.days):"Tous les jours"}</div></div><button class="link" onclick="delMedAll('${m.id}')">${pendingDel===m.id?"Confirmer":"Retirer"}</button></div>`;
+  return h+'<button class="big wide" onclick="showAllMeds(false)">Retour</button>';
+}
 function medsView(){
+  if(allMeds)return allMedsView();
   const n=new Date(),tk=dayKey(n),k=selKey,t=S.taken[k]||[],cur=pad(n.getHours())+":"+pad(n.getMinutes()),wd=parse(k).getDay();
   const list=S.meds.filter(m=>(m.days||ALL).includes(wd)).sort((a,b)=>a.time.localeCompare(b.time));
   let h=dayBar()+"<h2>"+(k===tk?"Aujourd’hui":fmt(k))+"</h2>";
@@ -300,6 +311,7 @@ function medsView(){
     h+=`<div class="card${done?" done":""}"><div class="time">${m.time}</div><div class="grow"><div class="name">${pillIcon(m)}${esc(m.name)}</div>${m.dose?'<div class="sub">'+esc(m.dose)+'</div>':""}${stockLine(m)}${m.days&&m.days.length<7?'<div class="sub">'+dl(m.days)+'</div>':""}${late?'<div class="late">En retard</div>':""}${miss?'<div class="miss">Pas pris</div>':""}</div>${done?'<div class="ok'+(justTook===m.id?" pop":"")+'">Pris ✓</div>':k>tk?"":`<button class="big" onclick="take('${m.id}')">J’ai pris</button>`}${m.stock!=null&&m.stock<=7?`<button class="link" onclick="refill('${m.id}')">J’ai renouvelé</button>`:""}<button class="link" onclick="delMed('${m.id}')">Retirer</button></div>`;
   }
   h+=statsCard();
+  if(S.meds.length)h+='<button class="ghost" style="margin:0 0 14px" onclick="showAllMeds(true)">Voir tous mes médicaments ('+S.meds.length+')</button>';
   h+=adding?`<div class="panel sheet"><label>Médicament<select id="f0" onchange="medPick(this)"><option value="">Choisir dans la liste…</option>${medOpts()}<option value="__autre">Autre (ajouter à ma liste)</option></select></label><button class="link" id="f0x" hidden onclick="medForget()"></button><label id="f1w" hidden>Nom du médicament<input id="f1" type="text" autocomplete="off"></label><p class="sub">La liste sert seulement à gagner du temps. Suivez toujours votre ordonnance.</p>${S.hid.length?'<button class="link" onclick="medReset()">Rétablir les médicaments retirés</button>':""}<label>Heure de la prise<input id="f2" type="time" value="08:00"></label><label>Dose (facultatif)<input id="f5" type="text" placeholder="1 comprimé" autocomplete="off"></label><div class="lbl">Aspect du médicament (facultatif)</div><div class="week" id="f6">${PCOL.map((c,i)=>`<button class="dtg opt swatch" data-i="${i}" aria-pressed="false" aria-label="${c[0]}" onclick="pickCol(this)"><span class="pill" style="background:${c[1]}"></span></button>`).join("")}</div><div class="week" id="f7"><button class="dtg opt" data-s="0" aria-pressed="true" onclick="pickShape(this)">Comprimé</button><button class="dtg opt" data-s="1" aria-pressed="false" onclick="pickShape(this)">Gélule</button></div><label>Stock actuel (facultatif)<input id="f8" type="number" inputmode="numeric" min="0" placeholder="30"></label><label>Une boîte contient (facultatif)<input id="f9" type="number" inputmode="numeric" min="1" placeholder="30"></label><div class="lbl">Jours de prise</div><div class="week">${[1,2,3,4,5,6,0].map(d=>`<button class="dtg" data-d="${d}" aria-pressed="true" onclick="tgl(this)">${DJ[d]}</button>`).join("")}</div><div class="err" id="err"></div><button class="big wide" onclick="addMed()">Enregistrer</button><button class="ghost" onclick="toggleAdd()">Annuler</button></div>`:'<button class="big wide" onclick="toggleAdd()">+ Ajouter un médicament</button>';
   return h;
 }
