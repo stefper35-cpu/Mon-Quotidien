@@ -210,6 +210,7 @@ textarea{display:block;width:100%;margin-top:6px;font:inherit;padding:10px 12px;
 .hfblood b{color:var(--warn);font-size:1.9rem}
 .hfal{border:3px solid var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:1.4rem;font-weight:700}
 .hfblk{border-top:1px solid var(--line);padding:12px 0}
+.helpbtn{background:transparent;color:var(--warn);border:3px solid var(--warn);font-size:1.35rem}
 </style>
 </head>
 <body>
@@ -284,7 +285,7 @@ function dayBar(){
   return h;
 }
 
-function go(t){tab=t;adding=false;addingMeas=false;editHealth=false;allMeds=false;pendingDel=null;render();animate();}
+function go(t){tab=t;adding=false;addingMeas=false;editHealth=false;allMeds=false;if(helpSt==="confirm")helpSt=null;pendingDel=null;render();animate();}
 function toggleAdd(){adding=!adding;render();if(adding){const f=$("f1");if(f)f.focus();}}
 
 let allMeds=false;
@@ -332,6 +333,7 @@ function rdvView(){
 
 function urgView(){
   let h='<h2>En cas d’urgence</h2><a class="sos" href="tel:15">Appeler le 15<small>SAMU, urgence médicale</small></a><a class="sos" href="tel:18">Appeler le 18<small>Pompiers</small></a><a class="sos" href="tel:112">Appeler le 112<small>Toutes urgences</small></a>';
+  h+=helpBlock();
   h+='<p class="empty">Pour joindre un proche, ouvrez l’onglet Famille.</p>';
   h+=healthView();
   return h;
@@ -665,9 +667,36 @@ function famView(){
   h+=`<label>Votre prénom<input type="text" value="${esc(f.name||"")}" oninput="S.family.name=this.value;save()" autocomplete="off"></label><p><b>Pour votre proche :</b> installer l’application gratuite <b>ntfy</b>, puis ajouter un abonnement avec ce code :</p><div class="code">${esc(f.topic)}</div><button class="big wide" onclick="famTest()">Envoyer un message test</button><p class="sub" id="fammsg"></p>${okSettings()}<button class="ghost" onclick="famOff()">Désactiver</button>${famHelp()}</div>`;
   return h;
 }
+let helpSt=null;
+function helpBlock(){
+  const f=S.family||{};
+  let h='<h2 class="fam">Besoin d’aide ?</h2><div class="panel">';
+  if(!f.topic)return h+'<p>Pour prévenir votre famille d’un seul geste, activez d’abord l’alerte famille.</p><button class="big wide" onclick="go(\'fam\')">Ouvrir l’onglet Famille</button></div>';
+  if(helpSt==="confirm")h+='<p><b>Envoyer un message d’aide à votre famille ?</b></p><button class="big wide helpbtn" onclick="helpSend()">Oui, envoyer</button><button class="ghost" onclick="helpCancel()">Non, annuler</button>';
+  else if(helpSt==="sending")h+='<p><b>Envoi en cours…</b></p><p class="sub">Votre position est ajoutée si le téléphone l’autorise.</p>';
+  else if(helpSt==="sent")h+='<div class="okdone">Message envoyé à votre famille ✓</div><p class="sub">Si personne n’a installé ntfy avec votre code, personne ne l’a reçu : appelez aussi un proche. Si c’est grave, appelez le 15.</p><button class="ghost" onclick="helpCancel()">Fermer</button>';
+  else if(helpSt==="fail")h+='<div class="alertbox"><b>L’envoi n’a pas marché.</b> Appelez directement un proche ou le 15.</div><button class="big wide helpbtn" onclick="helpSend()">Réessayer</button><button class="ghost" onclick="helpCancel()">Fermer</button>';
+  else h+='<button class="big wide helpbtn" onclick="helpAsk()">J’ai besoin d’aide</button><p class="sub">Un message est envoyé à votre famille. En cas de danger, appelez d’abord le 15.</p>';
+  return h+'</div>';
+}
+function helpAsk(){helpSt="confirm";render();}
+function helpCancel(){helpSt=null;render();}
+async function helpSend(){
+  helpSt="sending";render();
+  const pos=await new Promise(res=>{
+    if(!navigator.geolocation)return res(null);
+    let done=false;const fin=v=>{if(!done){done=true;clearTimeout(t);res(v);}};
+    const t=setTimeout(()=>fin(null),7000);
+    try{navigator.geolocation.getCurrentPosition(p=>fin(p.coords),()=>fin(null),{timeout:6000,maximumAge:120000});}catch(e){fin(null);}
+  });
+  let msg=((S.family&&S.family.name)||"Votre proche")+" demande de l’aide. Merci de l’appeler tout de suite.";
+  if(pos)msg+=" Position : https://maps.google.com/?q="+pos.latitude.toFixed(5)+","+pos.longitude.toFixed(5);
+  const ok=await famSend(msg);
+  helpSt=ok?"sent":"fail";render();
+}
 let helpOpen=false;
 function famHelp(){
-  return '<details class="help"'+(helpOpen?' open':'')+' ontoggle="helpOpen=this.open"><summary>Comment ça marche ?</summary><ol><li>Appuyez sur « Activer » : l’application crée un code secret.</li><li>Votre proche installe l’application gratuite <b>ntfy</b> et ajoute un abonnement avec ce code.</li><li>Si un médicament n’est pas marqué « J’ai pris » 30 minutes après l’heure prévue, votre proche reçoit un message avec votre prénom et l’heure. Un seul message par médicament et par jour.</li></ol><p><b>À savoir</b></p><ul><li>L’application doit être ouverte sur votre téléphone, avec une connexion Internet. Sinon, aucune alerte n’est envoyée.</li><li>Le message ne contient pas le nom du médicament.</li><li>Option « Je vais bien » : si vous ne touchez pas ce bouton avant l’heure choisie, votre proche est prévenu.</li><li>Ce n’est pas un service d’urgence : l’alerte ne détecte ni malaise ni chute. En cas d’urgence, appelez le 15 ou le 112.</li><li>Le code est un secret : ne le donnez qu’aux personnes à prévenir.</li></ul></details>';
+  return '<details class="help"'+(helpOpen?' open':'')+' ontoggle="helpOpen=this.open"><summary>Comment ça marche ?</summary><ol><li>Appuyez sur « Activer » : l’application crée un code secret.</li><li>Votre proche installe l’application gratuite <b>ntfy</b> et ajoute un abonnement avec ce code.</li><li>Si un médicament n’est pas marqué « J’ai pris » 30 minutes après l’heure prévue, votre proche reçoit un message avec votre prénom et l’heure. Un seul message par médicament et par jour.</li></ol><p><b>À savoir</b></p><ul><li>L’application doit être ouverte sur votre téléphone, avec une connexion Internet. Sinon, aucune alerte n’est envoyée.</li><li>Le message ne contient pas le nom du médicament.</li><li>Bouton « J’ai besoin d’aide » (onglet Urgence) : il prévient aussitôt votre famille, avec votre position si le téléphone l’autorise.</li><li>Option « Je vais bien » : si vous ne touchez pas ce bouton avant l’heure choisie, votre proche est prévenu.</li><li>Ce n’est pas un service d’urgence : l’alerte ne détecte ni malaise ni chute. En cas d’urgence, appelez le 15 ou le 112.</li><li>Le code est un secret : ne le donnez qu’aux personnes à prévenir.</li></ul></details>';
 }
 function famOn(){
   let r;try{r=Array.from(crypto.getRandomValues(new Uint8Array(9)),b=>(b%36).toString(36)).join("");}catch(e){r=uid()+uid();}
