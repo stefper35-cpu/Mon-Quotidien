@@ -30,7 +30,7 @@ h2{font-size:1.4rem;margin:8px 0 14px}
 .ok{color:var(--ok);font-weight:700;font-size:1.3rem}
 .empty{color:var(--muted)}
 button{font:inherit;cursor:pointer;border-radius:14px;border:2px solid transparent;min-height:60px;padding:10px 20px}
-button:focus-visible,input:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
 .big{background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:1.2rem}
 .wide{width:100%}
 .ghost{background:transparent;border-color:var(--line);color:var(--ink);width:100%;margin-top:10px}
@@ -133,7 +133,7 @@ nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 .dy[aria-current="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .dy.today:not([aria-current="true"]){border-color:var(--accent);border-width:2px}
 .wk2 button{border-radius:12px}
-input,select{border-radius:10px;border-width:1px}
+input,select,textarea{border-radius:10px;border-width:1px}
 
 /* style raffiné */
 body{max-width:640px;margin:0 auto}
@@ -187,6 +187,29 @@ header .clock,.tools{grid-row:1/4}
 .okdone{background:var(--surface);border:1px solid var(--ok);border-left:4px solid var(--ok);border-radius:14px;padding:12px 14px;margin-bottom:14px;color:var(--ok);font-weight:700}
 .okset{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
 .offer .ol{margin:8px 0 8px;padding-left:20px}.offer .ol li{margin-bottom:4px}.offer .ofree{color:var(--muted)}
+.hrow{margin-bottom:10px}
+textarea{display:block;width:100%;margin-top:6px;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical;min-height:84px}
+.hhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.hname{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.2}
+.blood{min-width:64px;height:64px;border-radius:50%;background:var(--warn);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem}
+.hal{margin:0 0 12px}
+.hlab{font-weight:700;color:var(--accent);margin-bottom:4px}
+.hal .hlab{color:var(--warn)}
+.hnone{margin-bottom:12px}
+.hsec{border-top:1px solid var(--line);padding:12px 0}
+.hc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0}
+.tl{margin:4px 0;padding-left:20px}
+.tl li{margin-bottom:6px}
+.hprog{border-top:1px solid var(--line);padding:12px 0 6px}
+.hprog .bar{margin-top:6px;margin-bottom:12px}
+#hfull{position:fixed;inset:0;z-index:45;background:var(--surface);color:var(--ink);overflow-y:auto;padding:calc(20px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));font-size:1.15rem;max-width:640px;margin:0 auto}
+#hfull .big{margin-top:16px}
+.hfname{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:2rem;line-height:1.15}
+.hfsub{color:var(--muted);margin:2px 0 12px}
+.hfblood{font-size:1.5rem;margin-bottom:14px}
+.hfblood b{color:var(--warn);font-size:1.9rem}
+.hfal{border:3px solid var(--warn);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:1.4rem;font-weight:700}
+.hfblk{border-top:1px solid var(--line);padding:12px 0}
 </style>
 </head>
 <body>
@@ -208,6 +231,7 @@ header .clock,.tools{grid-row:1/4}
   <button data-t="vault" onclick="go('vault')"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>Papiers</button>
 </nav>
 <div id="viewer" hidden><img id="vimg" alt=""><button class="big" onclick="closeDoc()">Fermer</button></div>
+<div id="hfull" hidden><div id="hfull-body"></div><button class="big wide" onclick="closeHealthFull()">Fermer</button></div>
 <div id="alarm" role="alertdialog" aria-live="assertive" hidden>
   <div class="t" id="alarm-head">C’est l’heure de prendre</div>
   <div class="n" id="alarm-name"></div>
@@ -434,28 +458,101 @@ function addMeas(){
 }
 function delMeas(id){S.measures=S.measures.filter(m=>m.id!==id);save();render();}
 let editHealth=false,okBusy=false;
+const BLOODS=["A+","A-","B+","B-","AB+","AB-","O+","O-"];
+const tel=p=>String(p||"").replace(/[^\d+]/g,"");
 function toggleHealth(){editHealth=!editHealth;render();}
+function hAge(b){
+  if(!b)return "";const d=new Date(b+"T12:00:00");if(isNaN(d))return "";
+  const n=new Date();let a=n.getFullYear()-d.getFullYear();
+  if(n.getMonth()<d.getMonth()||(n.getMonth()===d.getMonth()&&n.getDate()<d.getDate()))a--;
+  return a>=0&&a<130?a+" ans":"";
+}
+function hTreat(){
+  const g={};
+  for(const m of S.meds){const e=g[m.name]||(g[m.name]={dose:"",times:[]});if(!e.dose&&m.dose)e.dose=m.dose;e.times.push(m.time);}
+  return Object.keys(g).sort().map(n=>({name:n,dose:g[n].dose,times:g[n].times.sort().join(", ")}));
+}
+function hDone(){
+  const H=S.health||{};
+  const c=[H.name,H.birth,H.blood,H.allergies,H.conditions,H.doctor&&H.dphone,S.contacts.length];
+  return Math.round(c.filter(Boolean).length/c.length*100);
+}
+function hSec(t,body){return '<div class="hsec"><div class="hlab">'+t+'</div>'+body+'</div>';}
+function hCall(name,phone,lab){
+  return '<div class="hc"><div class="grow"><div class="name">'+esc(name)+'</div>'+(phone?'<div class="sub">'+esc(phone)+'</div>':"")+'</div>'+(phone?'<a class="call" href="tel:'+tel(phone)+'">'+(lab||"Appeler")+'</a>':"")+'</div>';
+}
 function healthView(){
-  const H=S.health||{},names=[...new Set(S.meds.map(m=>m.name))];
+  const H=S.health||{};
   let h='<h2 class="fam">Ma fiche santé</h2>';
-  if(editHealth){
-    const f=(id,l,v,ph,ty)=>`<label>${l}<input id="${id}" type="${ty||"text"}" value="${esc(v||"")}" placeholder="${ph||""}" autocomplete="off"></label>`;
-    return h+'<div class="panel">'+f("h1","Groupe sanguin",H.blood,"A+")+f("h2","Allergies",H.allergies,"Pénicilline")+f("h3","Médecin traitant",H.doctor,"Dr Martin")+f("h4","Téléphone du médecin",H.dphone,"","tel")+f("h5","Autres informations",H.notes,"Porte un stimulateur cardiaque")+'<button class="big wide" onclick="saveHealth()">Enregistrer</button><button class="ghost" onclick="toggleHealth()">Annuler</button></div>';
+  if(editHealth)return h+healthForm(H);
+  const tr=hTreat(),age=hAge(H.birth),pc=hDone();
+  const any=H.name||H.birth||H.blood||H.allergies||H.conditions||H.doctor||H.pharmacy||H.secu||H.notes||tr.length||S.contacts.length;
+  h+='<div class="panel hcard">';
+  if(!any){
+    h+='<p class="empty">Remplissez cette fiche une fois : en cas de malaise, les secours y trouvent l’essentiel en quelques secondes.</p><button class="big wide" onclick="toggleHealth()">Remplir ma fiche</button></div>';
+    return h;
   }
-  const row=(a,b)=>b?`<div class="hrow"><div class="sub">${a}</div><div class="name">${esc(b)}</div></div>`:"";
-  const any=H.blood||H.allergies||H.doctor||H.notes||names.length;
-  h+='<div class="panel">';
-  if(any){
-    h+=row("Groupe sanguin",H.blood)+row("Allergies",H.allergies)+row("Médecin traitant",H.doctor);
-    if(H.dphone)h+=`<a class="call" style="margin:0 0 12px" href="tel:${H.dphone.replace(/[^\d+]/g,"")}">Appeler le médecin</a>`;
-    h+=row("Autres informations",H.notes)+row("Traitements en cours",names.join(", "));
-  }else h+='<p class="empty">Aucune information. Remplissez cette fiche pour l’avoir sous la main en cas de besoin.</p>';
-  return h+'<button class="ghost" onclick="toggleHealth()">'+(any?"Modifier":"Remplir")+'</button><p class="sub">Informations saisies par vous. Elles ne remplacent pas un dossier médical.</p></div>';
+  h+='<div class="hhead"><div class="grow"><div class="hname">'+esc(H.name||"Nom non renseigné")+'</div><div class="sub">'+[age,H.birth?"né(e) le "+new Date(H.birth+"T12:00:00").toLocaleDateString("fr-FR"):""].filter(Boolean).map(esc).join(" · ")+'</div></div>'+(H.blood?'<div class="blood" aria-label="Groupe sanguin">'+esc(H.blood)+'</div>':"")+'</div>';
+  h+=H.allergies?'<div class="alertbox hal"><div class="hlab">Allergies</div><div class="name">'+esc(H.allergies)+'</div></div>':'<div class="sub hnone">Allergies : non renseignées</div>';
+  if(H.conditions)h+=hSec("Maladies et antécédents",'<div>'+esc(H.conditions)+'</div>');
+  h+=hSec("Traitements en cours",tr.length?'<ul class="tl">'+tr.map(t=>'<li><b>'+esc(t.name)+'</b>'+(t.dose?' · '+esc(t.dose):"")+'<div class="sub">'+esc(t.times)+'</div></li>').join("")+'</ul>':'<div class="sub">Ajoutez vos médicaments dans l’onglet Pilules.</div>');
+  if(H.doctor||H.dphone)h+=hSec("Médecin traitant",hCall(H.doctor||"Médecin",H.dphone));
+  if(H.pharmacy||H.pphone)h+=hSec("Pharmacie",hCall(H.pharmacy||"Pharmacie",H.pphone));
+  h+=hSec("Personnes à prévenir",S.contacts.length?S.contacts.map(c=>hCall(c.name,c.phone)).join(""):'<div class="sub">Ajoutez des contacts dans l’onglet Famille.</div>');
+  if(H.secu)h+=hSec("Sécurité sociale",'<div class="name">'+esc(H.secu)+'</div>');
+  if(H.notes)h+=hSec("Autres informations",'<div>'+esc(H.notes)+'</div>');
+  h+='<div class="hprog"><div class="sub">Fiche complétée à '+pc+' %</div><div class="bar"><i style="width:'+pc+'%"></i></div></div>';
+  h+='<button class="big wide" onclick="healthFull()">Montrer aux secours</button><button class="ghost" onclick="shareHealth()">Partager ma fiche</button><button class="ghost" onclick="toggleHealth()">Modifier</button>';
+  const old=H.updated&&(parse(dayKey(new Date()))-parse(H.updated))/864e5>180;
+  h+='<p class="sub">'+(H.updated?"Mise à jour le "+new Date(H.updated+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})+". ":"")+(old?"Pensez à vérifier que tout est à jour. ":"")+'Informations saisies par vous : elles ne remplacent pas un dossier médical.</p></div>';
+  return h;
+}
+function healthForm(H){
+  const f=(id,l,v,ph,ty)=>`<label>${l}<input id="${id}" type="${ty||"text"}" value="${esc(v||"")}" placeholder="${esc(ph||"")}" autocomplete="off"></label>`;
+  const t=(id,l,v,ph)=>`<label>${l}<textarea id="${id}" rows="2" placeholder="${esc(ph||"")}">${esc(v||"")}</textarea></label>`;
+  const bl=[...BLOODS];if(H.blood&&!bl.includes(H.blood))bl.push(H.blood);
+  return '<div class="panel sheet">'+f("h0","Prénom et nom",H.name,"Stef Dupont")+f("h6","Date de naissance",H.birth,"","date")
+   +`<label>Groupe sanguin<select id="h1"><option value="">Je ne sais pas</option>${bl.map(b=>`<option value="${esc(b)}"${b===H.blood?" selected":""}>${esc(b)}</option>`).join("")}</select></label>`
+   +t("h2","Allergies",H.allergies,"Pénicilline, arachides…")+t("h7","Maladies et antécédents",H.conditions,"Diabète, hypertension…")
+   +f("h3","Médecin traitant",H.doctor,"Dr Martin")+f("h4","Téléphone du médecin",H.dphone,"","tel")
+   +f("h8","Pharmacie",H.pharmacy,"")+f("h9","Téléphone de la pharmacie",H.pphone,"","tel")
+   +f("hs","Numéro de sécurité sociale (facultatif)",H.secu,"")+t("h5","Autres informations",H.notes,"Porte un stimulateur cardiaque…")
+   +'<p class="sub">Vos traitements et vos contacts sont repris automatiquement depuis les onglets Pilules et Famille.</p><button class="big wide" onclick="saveHealth()">Enregistrer</button><button class="ghost" onclick="toggleHealth()">Annuler</button></div>';
 }
 function saveHealth(){
   const g=id=>$(id).value.trim();
-  S.health={blood:g("h1"),allergies:g("h2"),doctor:g("h3"),dphone:g("h4"),notes:g("h5")};
+  S.health={name:g("h0"),birth:$("h6").value,blood:$("h1").value,allergies:g("h2"),conditions:g("h7"),doctor:g("h3"),dphone:g("h4"),pharmacy:g("h8"),pphone:g("h9"),secu:g("hs"),notes:g("h5"),updated:dayKey(new Date())};
   save();editHealth=false;render();
+}
+function healthFull(){
+  const H=S.health||{},tr=hTreat(),age=hAge(H.birth);
+  let h='<div class="hfname">'+esc(H.name||"Fiche santé")+'</div><div class="hfsub">'+[age,H.birth?new Date(H.birth+"T12:00:00").toLocaleDateString("fr-FR"):""].filter(Boolean).map(esc).join(" · ")+'</div>';
+  if(H.blood)h+='<div class="hfblood">Groupe sanguin : <b>'+esc(H.blood)+'</b></div>';
+  if(H.allergies)h+='<div class="hfal"><div class="hlab">Allergies</div>'+esc(H.allergies)+'</div>';
+  if(H.conditions)h+='<div class="hfblk"><div class="hlab">Maladies et antécédents</div>'+esc(H.conditions)+'</div>';
+  if(tr.length)h+='<div class="hfblk"><div class="hlab">Traitements en cours</div><ul class="tl">'+tr.map(t=>'<li><b>'+esc(t.name)+'</b>'+(t.dose?' · '+esc(t.dose):"")+'</li>').join("")+'</ul></div>';
+  if(H.notes)h+='<div class="hfblk"><div class="hlab">Autres informations</div>'+esc(H.notes)+'</div>';
+  const cs=S.contacts.map(c=>hCall(c.name,c.phone)).join("")+((H.doctor||H.dphone)?hCall("Médecin : "+(H.doctor||""),H.dphone):"");
+  if(cs)h+='<div class="hfblk"><div class="hlab">À prévenir</div>'+cs+'</div>';
+  $("hfull-body").innerHTML=h;$("hfull").hidden=false;$("hfull").scrollTop=0;
+}
+function closeHealthFull(){$("hfull").hidden=true;}
+function healthText(){
+  const H=S.health||{},L=["Fiche santé"+(H.name?" de "+H.name:"")];
+  const add=(a,b)=>{if(b)L.push(a+" : "+b);};
+  add("Né(e) le",H.birth?new Date(H.birth+"T12:00:00").toLocaleDateString("fr-FR")+(hAge(H.birth)?" ("+hAge(H.birth)+")":""):"");
+  add("Groupe sanguin",H.blood);add("Allergies",H.allergies);add("Maladies et antécédents",H.conditions);
+  const tr=hTreat();if(tr.length){L.push("Traitements en cours :");for(const t of tr)L.push("- "+t.name+(t.dose?" ("+t.dose+")":"")+" à "+t.times);}
+  add("Médecin traitant",[H.doctor,H.dphone].filter(Boolean).join(" "));add("Pharmacie",[H.pharmacy,H.pphone].filter(Boolean).join(" "));
+  if(S.contacts.length){L.push("Personnes à prévenir :");for(const c of S.contacts)L.push("- "+c.name+" "+c.phone);}
+  add("Sécurité sociale",H.secu);add("Autres informations",H.notes);
+  L.push("","Informations saisies par la personne, sans valeur de dossier médical.");
+  return L.join("\n");
+}
+async function shareHealth(){
+  const txt=healthText();
+  try{if(navigator.share){await navigator.share({title:"Ma fiche santé",text:txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(txt);alert("Votre fiche est copiée. Vous pouvez la coller dans un message.");}catch(e){prompt("Copiez ce texte :",txt);}
 }
 function speakToday(){
   try{
@@ -490,7 +587,7 @@ function okCheck(n){
 }
 function backupView(){
   const lb=S.lastBackup,old=lb&&(parse(dayKey(new Date()))-parse(lb))/864e5>30;
-  return '<h2 class="fam">Sauvegarde</h2><div class="panel"><p>Vos données restent sur ce téléphone. Faites une copie de sécurité pour les retrouver si vous changez de téléphone.</p><p class="sub">'+(lb?"Dernière sauvegarde : "+new Date(lb+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})+(old?". Pensez à en refaire une.":"."):"Aucune sauvegarde pour le moment.")+'</p><button class="big wide" onclick="exportData()">Enregistrer une sauvegarde</button><button class="ghost" onclick="impClick()">Restaurer une sauvegarde</button><p class="sub">Les photos du coffre ne sont pas incluses. La sauvegarde contient votre code famille : gardez-la pour vous.</p></div>';
+  return '<h2 class="fam">Sauvegarde</h2><div class="panel"><p>Vos données restent sur ce téléphone. Faites une copie de sécurité pour les retrouver si vous changez de téléphone.</p><p class="sub">'+(lb?"Dernière sauvegarde : "+new Date(lb+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})+(old?". Pensez à en refaire une.":"."):"Aucune sauvegarde pour le moment.")+'</p><button class="big wide" onclick="exportData()">Enregistrer une sauvegarde</button><button class="ghost" onclick="impClick()">Restaurer une sauvegarde</button><p class="sub">Les photos du coffre ne sont pas incluses. La sauvegarde contient votre fiche santé et votre code famille : gardez-la pour vous.</p></div>';
 }
 function impClick(){$("imp").click();}
 function exportData(){
